@@ -14,9 +14,16 @@ func TestCursors(t *testing.T) {
 	load()
 	withPool(func() {
 		arrow := send(class("NSCursor"), "arrowCursor")
+		// Without a window server, as over SSH, AppKit gives no arrow or
+		// I-beam, which it draws from the system's cursors: the others
+		// must still come, and none may raise (_moveCursor did).
+		server := arrow != 0
+		if !server {
+			t.Log("no window server: the arrow and the I-beam are nil")
+		}
 		for c := platform.CursorDefault; c <= platform.CursorNoDrop; c++ {
 			cur := nsCursor(c)
-			if cur == 0 {
+			if cur == 0 && (server || c != platform.CursorDefault && c != platform.CursorText) {
 				t.Errorf("cursor %d: no NSCursor", c)
 			}
 			if c != platform.CursorDefault && cur == arrow {

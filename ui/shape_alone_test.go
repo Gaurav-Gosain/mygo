@@ -3,23 +3,31 @@ package ui
 import (
 	"math/rand/v2"
 	"os"
+	"runtime"
 	"testing"
+
+	"golang.org/x/image/font/gofont/gomono"
+	"golang.org/x/image/font/gofont/gomonobold"
 )
 
 // TestShapeAlone checks that text AppendShapeAlone lays out takes the
-// glyphs and advances Shape gives it, in a coding font with ligatures on
-// and off, and that it declines text with ligatures.
+// glyphs and advances Shape gives it, in a monospaced font with ligatures
+// on and off, and that it declines text with ligatures. The font is Go
+// Mono, which has no OpenType features, or the file MYGO_TEST_MONO_FONT
+// names: a coding font with ligatures tests the lookup check.
 func TestShapeAlone(t *testing.T) {
-	path := os.Getenv("MYGO_TEST_MONO_FONT")
-	if path == "" {
-		t.Skip("MYGO_TEST_MONO_FONT names no font file")
+	fonts := [][]byte{gomono.TTF, gomonobold.TTF}
+	if path := os.Getenv("MYGO_TEST_MONO_FONT"); path != "" {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		fonts = [][]byte{data}
 	}
-	data, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := RegisterFont(data, "Alone Test Mono"); err != nil {
-		t.Fatal(err)
+	for _, data := range fonts {
+		if err := RegisterFont(data, "Alone Test Mono"); err != nil {
+			t.Fatal(err)
+		}
 	}
 	alphabet := []rune(" !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~éüñßÆø")
 	rng := rand.New(rand.NewPCG(1, 2))
@@ -49,6 +57,11 @@ func TestShapeAlone(t *testing.T) {
 				}
 			}
 			t.Logf("features %q weight %d: %d of 20000 laid out alone", features, weight, fast)
+			// Pango's engine implements it; Core Text and DirectWrite
+			// lay nothing out alone yet.
+			if fast == 0 && runtime.GOOS == "linux" {
+				t.Errorf("features %q weight %d: nothing laid out alone", features, weight)
+			}
 		}
 	}
 	// Ligatures and contextual alternates need shaping.

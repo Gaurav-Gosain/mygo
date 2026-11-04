@@ -125,6 +125,11 @@ func (v *view) paint(p *ui.Painter, r ui.Rect) {
 	if v.ticking && v.gesture != nil {
 		v.autoscroll()
 	}
+	// The scrollback moves to where it is in this frame, and asks for the
+	// next while it moves (smooth.go).
+	if v.stepScroll(t.term, p.Now()) {
+		p.After(0)
+	}
 	t.rmu.Lock()
 	defer t.rmu.Unlock()
 	// A synchronized update shows when it ends, or after a second.
@@ -143,6 +148,7 @@ func (v *view) paint(p *ui.Painter, r ui.Rect) {
 	if !held {
 		v.readImages(t.term)
 	}
+	above := v.pull > 0 && v.beginAbove(t.term)
 	t.mu.Unlock()
 	rs := t.rs
 	if !held {
@@ -164,7 +170,47 @@ func (v *view) paint(p *ui.Painter, r ui.Rect) {
 		}
 	}
 	rs.Clean()
+	v.aboveOK = above && v.endAbove(cols)
 	v.draw(p, r)
+}
+
+// beginAbove copies the row above the viewport into rsAbove, while the
+// content is pulled down to show part of it: the viewport goes a row up
+// for the copy and back. t.mu is held; endAbove finishes without it.
+func (v *view) beginAbove(term *vt.Terminal) bool {
+	if term.AltScreen() || term.Scrollbar().Offset == 0 {
+		return false
+	}
+	if v.rsAbove == nil {
+		rs, err := vt.NewRenderState()
+		if err != nil {
+			return false
+		}
+		v.rsAbove = rs
+	}
+	bottom := term.AtBottom()
+	term.ScrollBy(-1)
+	err := v.rsAbove.BeginUpdate(term)
+	if bottom {
+		term.ScrollToBottom() // following the output again
+	} else {
+		term.ScrollBy(1)
+	}
+	return err == nil
+}
+
+// endAbove builds the row above the viewport from rsAbove, and reports
+// whether it has one.
+func (v *view) endAbove(cols int) bool {
+	rs := v.rsAbove
+	rs.EndUpdate()
+	rs.Rows()
+	ok := rs.NextRow()
+	if ok && (!v.aboveOK || rs.RowDirty() || rs.Dirty() == vt.Full) {
+		v.buildRow(&v.above, rs, cols)
+	}
+	rs.Clean()
+	return ok
 }
 
 // resolved is a cell's style with its colors resolved.
@@ -505,6 +551,8 @@ func (v *view) draw(p *ui.Painter, r ui.Rect) {
 	// The grid starts at a whole pixel of the display.
 	ox := (float32(math.Round(float64(r.X*s))) + float32(v.ox)) / s
 	oy := (float32(math.Round(float64(r.Y*s))) + float32(v.oy)) / s
+	// Pulled down past the top row, in whole device pixels.
+	oy += float32(math.Round(float64(v.pull*s))) / s
 	base := float32(v.baseline) / s
 	// A transparent terminal still draws a background a program set (OSC
 	// 11), as Ghostty shows it.
@@ -519,6 +567,14 @@ func (v *view) draw(p *ui.Painter, r ui.Rect) {
 		selection = color(v.colors.Foreground).Alpha(0.3)
 	}
 	v.drawImages(p, belowBackground, ox, oy)
+	if v.aboveOK && v.pull > 0 {
+		// The row above the viewport, as far as the content is pulled.
+		ry := oy - ch
+		for _, b := range v.above.bgs {
+			p.Fill(ui.Rect{X: ox + float32(b.x0)*cw, Y: ry, W: float32(b.x1-b.x0) * cw, H: ch}, b.c, 0)
+		}
+		v.drawText(p, &v.above, ox, ry, cw, ch, base, ui.Color{})
+	}
 	for y := range v.lines {
 		line := &v.lines[y]
 		ry := oy + float32(y)*ch
@@ -836,7 +892,11 @@ func (v *view) drawScrollbar(p *ui.Painter, r ui.Rect) {
 	if !v.inView && !v.barHeld {
 		return
 	}
-	p.Scrollbar(bar(v.scrollbar, r), ui.ScrollbarState{Dragging: v.barHeld, Color: color(v.colors.Foreground)})
+	sb := bar(v.scrollbar, r)
+	if ch := float32(v.cellH) / v.scale; ch > 0 {
+		sb.Offset = max(sb.Offset-v.pull/ch, 0) // the thumb moves by pixels too
+	}
+	p.Scrollbar(sb, ui.ScrollbarState{Dragging: v.barHeld, Color: color(v.colors.Foreground)})
 }
 
 // bar returns the scroll bar of the scrollback sb, along the right edge of

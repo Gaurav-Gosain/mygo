@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/egoist/mygo/plugins/terminal/internal/vt"
 )
 
 // ErrFullScreen is PrependHistory's error while a full-screen program's
@@ -22,31 +24,158 @@ var ErrFullScreen = errors.New("terminal: a full-screen program's screen shows")
 //
 // What the view shows stays where it is: scrolled into the history, it
 // shows the same rows after, which are now further from the top; at the
-// bottom, it stays there. The screen, the cursor and the modes programs
-// set stay as they are, and output that comes later lands as it would
-// have. The terminal is rebuilt to do this: it starts over with rows,
-// then what it showed (Snapshot), so it costs as much as writing its
-// whole scrollback again, and the images programs placed, which a
-// snapshot does not carry, go. A search and a selection end.
+// bottom, it stays there. The screen, the cursor, the modes programs set,
+// the title, the working directory (OSC 7), the colors programs set (OSC
+// 4, 10, 11, 12) and the marks of the shell's prompt on the screen (OSC
+// 133) stay as they are, and output that comes later lands as it would
+// have. The terminal is rebuilt to do this: a new one takes rows, then
+// what this one shows (Snapshot), so it costs as much as writing the whole
+// scrollback again. It is built while frames and output go on, which only
+// wait for the snapshot and for the swap. The images programs placed,
+// which a snapshot does not carry, go, and a selection ends; a search
+// starts over, with the rows added.
 func (t *Terminal) PrependHistory(rows []byte) (int, error) {
 	if len(rows) == 0 {
 		return 0, nil
 	}
+	t.pmu.Lock()
+	defer t.pmu.Unlock()
+
 	t.mu.Lock()
-	term := t.term
-	if term == nil || t.closed {
+	if t.term == nil || t.closed {
 		t.mu.Unlock()
 		return 0, nil
 	}
-	if term.AltScreen() {
+	if t.term.AltScreen() {
 		t.mu.Unlock()
 		return 0, ErrFullScreen
 	}
-	before := term.Scrollbar()
-	bottom := term.AtBottom()
-	snap := term.VT()
-	title := term.Title()
-	term.Reset()
+	s := t.snapshotFor()
+	t.prep = &prepending{}
+	t.mu.Unlock()
+
+	quiet := &quietVT{on: true, size: s.size, dark: s.dark}
+	term, err := t.newVT(s.size.cols, s.size.rows, quiet)
+	if err == nil {
+		s.build(term, rows)
+	}
+	if prependBuilt != nil {
+		prependBuilt(t)
+	}
+
+	t.mu.Lock()
+	prep := t.prep
+	t.prep = nil
+	if err != nil || t.term == nil || t.closed {
+		t.mu.Unlock()
+		if term != nil {
+			term.Free()
+		}
+		return 0, err
+	}
+	// What changed the terminal while this one was built changes it too.
+	for _, op := range prep.ops {
+		if op.resize != nil {
+			r := op.resize
+			term.Resize(r.cols, r.rows, r.cellW, r.cellH)
+		} else {
+			term.Write(op.p)
+		}
+	}
+	quiet.on = false
+	if t.curTheme != nil {
+		t.curTheme.apply(term)
+	}
+	old := t.term
+	added := int(term.Scrollbar().Total) - int(old.Scrollbar().Total)
+	if old.AtBottom() {
+		term.ScrollToBottom()
+	} else {
+		term.ScrollToRow(int(old.Scrollbar().Offset) + added)
+	}
+	t.swap(term)
+	t.mu.Unlock()
+	t.redraw()
+	return max(added, 0), nil
+}
+
+// prependBuilt, for tests, runs once PrependHistory built the new
+// emulator, before it takes t.mu to swap it in.
+var prependBuilt func(t *Terminal)
+
+// prepending is what changed the emulator while PrependHistory builds the
+// one that replaces it, in order: output, or a resize.
+type prepending struct {
+	ops []prepOp
+}
+
+type prepOp struct {
+	p      []byte
+	resize *gridSize
+}
+
+// logPrepend records output p, or a resize to r, for the emulator
+// PrependHistory builds; t.mu is held.
+func (t *Terminal) logPrepend(p []byte, r *gridSize) {
+	if t.prep == nil {
+		return
+	}
+	if r != nil {
+		t.prep.ops = append(t.prep.ops, prepOp{resize: r})
+		return
+	}
+	if n := len(t.prep.ops); n > 0 && t.prep.ops[n-1].resize == nil {
+		t.prep.ops[n-1].p = append(t.prep.ops[n-1].p, p...)
+		return
+	}
+	t.prep.ops = append(t.prep.ops, prepOp{p: append([]byte(nil), p...)})
+}
+
+// vtWrite writes output to the emulator; t.mu is held.
+func (t *Terminal) vtWrite(p []byte) {
+	t.term.Write(p)
+	t.logPrepend(p, nil)
+}
+
+// vtResize resizes the emulator; t.mu is held.
+func (t *Terminal) vtResize(cols, rows, cellW, cellH int) {
+	t.term.Resize(cols, rows, cellW, cellH)
+	t.logPrepend(nil, &gridSize{cols, rows, cellW, cellH})
+}
+
+// prependSnapshot is what PrependHistory reads of the terminal under t.mu
+// to build the one that replaces it without: the snapshot, and what a
+// snapshot leaves out.
+type prependSnapshot struct {
+	size   gridSize
+	dark   bool
+	theme  *Theme
+	vt     []byte
+	title  string
+	colors string
+}
+
+// snapshotFor reads what PrependHistory builds the new terminal from; t.mu
+// is held.
+func (t *Terminal) snapshotFor() prependSnapshot {
+	term := t.term
+	s := prependSnapshot{
+		size:   t.size,
+		dark:   t.curTheme == nil || t.curTheme.dark(),
+		theme:  t.curTheme,
+		vt:     term.VT(),
+		title:  term.Title(),
+		colors: programColors(term),
+	}
+	return s
+}
+
+// build writes rows, then the snapshot and what it leaves out, to term,
+// which nothing else uses yet.
+func (s *prependSnapshot) build(term *vt.Terminal, rows []byte) {
+	if s.theme != nil {
+		s.theme.apply(term)
+	}
 	term.Write(rows)
 	if !bytes.HasSuffix(rows, []byte("\n")) {
 		// The last row ran on to its last column: what was the oldest
@@ -59,32 +188,56 @@ func (t *Terminal) PrependHistory(rows []byte) (int, error) {
 		_, h := term.Size()
 		term.Write(fmt.Appendf(nil, "\x1b[%dH%s", h, strings.Repeat("\n", y)))
 	}
-	term.Write(snap)
-	if title != "" {
-		// The snapshot leaves the title out, which Reset cleared.
-		term.Write([]byte("\x1b]2;" + title + "\x1b\\"))
+	term.Write(s.vt)
+	var b bytes.Buffer
+	if s.title != "" {
+		b.WriteString("\x1b]2;" + s.title + "\x1b\\")
 	}
-	added := int(term.Scrollbar().Total) - int(before.Total)
-	if bottom {
-		term.ScrollToBottom()
-	} else {
-		term.ScrollToRow(int(before.Offset) + added)
+	b.WriteString(s.colors)
+	term.Write(b.Bytes())
+}
+
+// swap makes term the terminal's emulator in place of the one it has,
+// which it frees; t.mu is held.
+func (t *Terminal) swap(term *vt.Terminal) {
+	old := t.term
+	t.term = term
+	t.rmu.Lock()
+	if t.held {
+		// The render state holds what the old one showed until the
+		// program's synchronized update ends: what this one shows now.
+		t.rs.Update(term)
 	}
-	t.events = events{}
+	t.rmu.Unlock()
+	if f := &t.find; f.s != nil {
+		f.s.Free()
+		f.s = nil
+		if s, err := vt.NewSearch(term); err == nil {
+			f.s = s
+			s.SetText(f.status.Text)
+			f.status = SearchStatus{Text: f.status.Text, Searching: true}
+			f.pick = false
+		}
+	}
 	for _, m := range t.mirrors {
 		m.started = false
 	}
-	t.mu.Unlock()
-	t.redraw()
-	return max(added, 0), nil
+	t.rebuilt = true
+	old.Free()
 }
 
 // nearTop reports whether OnNearTop is due: the view shows the scrollback
-// within a screen (rows) of its top, at a row it was not told of yet. t.mu
-// is held.
-func (v *view) nearTop(t *Terminal, rows int) bool {
-	sb := v.scrollbar
-	if t.opts.OnNearTop == nil || sb.Offset >= uint64(rows) || t.term.AtBottom() || t.term.AltScreen() {
+// within a screen of its top, at a row it was not told of yet. t.mu is
+// held.
+func (v *view) nearTop(t *Terminal) bool {
+	term := t.term
+	if t.opts.OnNearTop == nil || term.AtBottom() || term.AltScreen() {
+		v.toldTop = false
+		return false
+	}
+	_, rows := term.Size()
+	sb := term.Scrollbar()
+	if sb.Offset >= uint64(rows) {
 		v.toldTop = false
 		return false
 	}

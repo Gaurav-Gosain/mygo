@@ -117,8 +117,22 @@ func (t *Terminal) historyAbove(tb *testing.T, part *Terminal) []byte {
 // is, out of reach of the top.
 func TestOnNearTop(t *testing.T) {
 	loadLib(t)
-	var asked int
-	term, err := New(Options{Conn: newPipe(), OnNearTop: func() { asked++ }})
+	var asked, locked int
+	var term *Terminal
+	term, err := New(Options{Conn: newPipe(), OnNearTop: func() {
+		asked++
+		// It runs as a frame builds, with neither lock held.
+		if !term.rmu.TryLock() {
+			locked++
+			return
+		}
+		term.rmu.Unlock()
+		if !term.mu.TryLock() {
+			locked++
+			return
+		}
+		term.mu.Unlock()
+	}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -165,5 +179,113 @@ func TestOnNearTop(t *testing.T) {
 	}
 	if asked != 1 {
 		t.Errorf("asked %d times once the rows came, want 1", asked)
+	}
+	if locked != 0 {
+		t.Errorf("asked %d times with a lock of the terminal held", locked)
+	}
+}
+
+// TestPrependHistoryKeepsState: what a snapshot leaves out stays across
+// PrependHistory: the working directory (OSC 7), the colors programs set
+// (OSC 4, 10, 11).
+func TestPrependHistoryKeepsState(t *testing.T) {
+	loadLib(t)
+	term, err := New(Options{Conn: newPipe()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer term.Close()
+	term.Resize(20, 6)
+	var b strings.Builder
+	for i := range 8 {
+		b.WriteString("out " + itoa(i) + "\r\n")
+	}
+	b.WriteString("\x1b]7;file://host/tmp/work\x1b\\")
+	b.WriteString("\x1b]4;1;rgb:12/34/56\x1b\\\x1b]10;rgb:aa/bb/cc\x1b\\\x1b]11;rgb:01/02/03\x1b\\")
+	term.Feed([]byte(b.String()))
+
+	dir0, colors0 := readUnlocked(term)
+	if _, err := term.PrependHistory([]byte("older 1\r\nolder 2\r\n")); err != nil {
+		t.Fatal(err)
+	}
+	dir1, colors1 := readUnlocked(term)
+	if dir1 != dir0 || dir1 != "/tmp/work" {
+		t.Errorf("working directory %q, was %q", dir1, dir0)
+	}
+	if colors1 != colors0 {
+		t.Errorf("colors\n%+v\nwere\n%+v", colors1, colors0)
+	}
+	if colors1.Palette[1] != (vt.RGB{R: 0x12, G: 0x34, B: 0x56}) || colors1.Background != (vt.RGB{R: 1, G: 2, B: 3}) {
+		t.Errorf("colors programs set are gone: %+v", colors1)
+	}
+}
+
+// readUnlocked returns the working directory and the colors programs see.
+func readUnlocked(term *Terminal) (string, vt.TermColors) {
+	dir := term.Dir()
+	term.mu.Lock()
+	defer term.mu.Unlock()
+	return dir, term.term.Colors(false)
+}
+
+// TestPrependHistoryOffLock: the new terminal is built without t.mu, so
+// output, a resize and frames go on meanwhile; what came then lands in it
+// as in the old one, and its effects (a reply, a bell) happen once.
+func TestPrependHistoryOffLock(t *testing.T) {
+	loadLib(t)
+	var bells int
+	conn := newPipe()
+	term, err := New(Options{Conn: conn, OnBell: func() { bells++ }})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer term.Close()
+	term.Resize(20, 5)
+	whole, err := New(Options{Conn: newPipe()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer whole.Close()
+	whole.Resize(20, 5)
+	older := "older 1\r\nolder 2\r\n"
+	before := "a\r\nb\r\nc\r\nd\r\ne\r\nf\r\n"
+	during := "g\a\x1b[6n\r\nh\r\n"
+	whole.Feed([]byte(older + before))
+	term.Feed([]byte(before))
+	conn.take(term)
+
+	locked := 0
+	prependBuilt = func(tt *Terminal) {
+		if !tt.mu.TryLock() {
+			locked++
+			return
+		}
+		tt.mu.Unlock()
+		tt.Feed([]byte(during[:4]))
+		tt.Resize(24, 5)
+		tt.Feed([]byte(during[4:]))
+	}
+	defer func() { prependBuilt = nil }()
+	if _, err := term.PrependHistory([]byte(older)); err != nil {
+		t.Fatal(err)
+	}
+	prependBuilt = nil
+	if locked != 0 {
+		t.Fatal("t.mu is held while the new terminal is built")
+	}
+	whole.Feed([]byte(during[:4]))
+	whole.Resize(24, 5)
+	whole.Feed([]byte(during[4:]))
+	if term.Text() != whole.Text() {
+		t.Errorf("text\n%q, want\n%q", term.Text(), whole.Text())
+	}
+	if c, r := term.Size(); c != 24 || r != 5 {
+		t.Errorf("size %dx%d, want 24x5", c, r)
+	}
+	if got := strings.Count(conn.take(term), "R"); got != 1 {
+		t.Errorf("the cursor position was reported %d times, want 1", got)
+	}
+	if bells != 1 {
+		t.Errorf("rang %d times, want 1", bells)
 	}
 }

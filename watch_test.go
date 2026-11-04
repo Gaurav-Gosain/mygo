@@ -19,9 +19,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/egoist/mygo/internal/fake"
-	"github.com/egoist/mygo/internal/platform"
-	"github.com/egoist/mygo/internal/wait"
+	"github.com/Gaurav-Gosain/mygo/internal/fake"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/wait"
 )
 
 // fileWatchTestNotice reports notice for the target at path, found by

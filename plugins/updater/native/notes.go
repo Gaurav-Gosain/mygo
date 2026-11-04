@@ -4,8 +4,8 @@ import (
 	"strconv"
 	"unicode"
 
-	"github.com/egoist/mygo/plugins/updater/internal/markdown"
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/plugins/updater/internal/markdown"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 // notes builds release notes, in the manner of the page of package

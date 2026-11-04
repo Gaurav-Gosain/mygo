@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/egoist/mygo/internal/gpu/metal"
-	"github.com/egoist/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/gpu/metal"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
 )
 
 // BenchmarkStressFrameGPU runs the frames of the stress scenes, each

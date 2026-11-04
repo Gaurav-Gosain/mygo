@@ -16,7 +16,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/egoist/mygo/internal/wait"
+	"github.com/Gaurav-Gosain/mygo/internal/wait"
 )
 
 // TestMain lets the test binary play a development build of an app for

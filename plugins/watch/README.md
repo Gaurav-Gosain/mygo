@@ -8,7 +8,7 @@ Use the plugin in Go with the directories pages may watch, each under a
 name:
 
 ```go
-import "github.com/egoist/mygo/plugins/watch"
+import "github.com/Gaurav-Gosain/mygo/plugins/watch"
 
 mygo.Use(watch.New(watch.Options{
 	Roots: map[string]watch.Root{

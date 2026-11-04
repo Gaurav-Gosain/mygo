@@ -6,8 +6,8 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/egoist/mygo/internal/fake"
-	"github.com/egoist/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/fake"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
 )
 
 // webViewMenu is a context menu of the web view's: Back, Reload, a

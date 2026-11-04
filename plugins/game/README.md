@@ -11,7 +11,7 @@ opt-in: MyGo is an app framework.
   browsers (the Gamepad API).
 
 ```go
-import "github.com/egoist/mygo/plugins/game/gamepad"
+import "github.com/Gaurav-Gosain/mygo/plugins/game/gamepad"
 
 for _, pad := range gamepad.Pads() {
 	s := pad.State()

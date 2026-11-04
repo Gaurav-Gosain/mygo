@@ -2,7 +2,7 @@
 
 package web
 
-import "github.com/egoist/mygo/internal/platform"
+import "github.com/Gaurav-Gosain/mygo/internal/platform"
 
 func (*Backend) Secrets() platform.Secrets { return secrets{} }
 

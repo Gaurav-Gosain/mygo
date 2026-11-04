@@ -13,7 +13,7 @@ socket that only the user can open.
 
 package main
 
-import _ "github.com/egoist/mygo/plugins/automation"
+import _ "github.com/Gaurav-Gosain/mygo/plugins/automation"
 ```
 
 ```sh

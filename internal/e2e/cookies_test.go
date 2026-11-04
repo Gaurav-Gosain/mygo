@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/egoist/mygo"
+	"github.com/Gaurav-Gosain/mygo"
 )
 
 // getCookie returns the cookie of name, domain and path.

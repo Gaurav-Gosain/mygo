@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/egoist/mygo/ui"
-	"github.com/egoist/mygo/ui/markdown/parser"
+	"github.com/Gaurav-Gosain/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/ui/markdown/parser"
 )
 
 // rvView builds a View of *src and returns its tester and a getter of its

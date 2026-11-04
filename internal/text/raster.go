@@ -4,7 +4,7 @@ import (
 	"image"
 	"math"
 
-	"github.com/egoist/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
 )
 
 // A Shade is how light the color of text is, from 0 (dark) to Shades-1

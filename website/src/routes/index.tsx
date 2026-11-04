@@ -165,7 +165,7 @@ function Home() {
                 <figcaption className="label border-b px-4 py-3 sm:px-6">Start a project</figcaption>
                 <pre className="overflow-x-auto px-4 py-4 font-mono text-[13px] leading-[1.7] sm:px-6">
                   <span className="text-gopher-ink select-none">$ </span>
-                  {"go run github.com/egoist/mygo/cmd/mygo@latest \\\n    init -template native my-app\n"}
+                  {"go run github.com/Gaurav-Gosain/mygo/cmd/mygo@latest \\\n    init -template native my-app\n"}
                   <span className="text-gopher-ink select-none">$ </span>
                   {"cd my-app && go tool mygo dev"}
                 </pre>

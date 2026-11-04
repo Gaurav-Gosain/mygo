@@ -5,7 +5,7 @@ package darwin
 import (
 	"github.com/ebitengine/purego/objc"
 
-	"github.com/egoist/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
 )
 
 // A flyout with Flyout.Popover shows its web view or surface in an

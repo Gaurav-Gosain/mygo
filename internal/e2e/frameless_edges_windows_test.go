@@ -7,9 +7,9 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/egoist/mygo"
-	win "github.com/egoist/mygo/internal/windows"
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo"
+	win "github.com/Gaurav-Gosain/mygo/internal/windows"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 // TestNativeUIFramelessEdges checks that a frameless window of native UI

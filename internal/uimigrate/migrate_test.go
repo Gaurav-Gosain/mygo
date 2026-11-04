@@ -10,7 +10,7 @@ import (
 
 func TestMigrationPreservesLocalValuePolling(t *testing.T) {
 	source := `package app
-import native "github.com/egoist/mygo/ui"
+import native "github.com/Gaurav-Gosain/mygo/ui"
 var shared bool
 type app struct { checked bool }
 func (a *app) view(c *native.Context, persistent *bool) {
@@ -56,7 +56,7 @@ func (a *app) view(c *native.Context, persistent *bool) {
 
 func TestMigrationAliasesScopesAndNilValues(t *testing.T) {
 	source := `package app
-import native "github.com/egoist/mygo/ui"
+import native "github.com/Gaurav-Gosain/mygo/ui"
 type app struct { saved *native.Element; other *int }
 func (a *app) view(c *native.Context) {
  native.Column(c).Children(func() {
@@ -111,7 +111,7 @@ func render(c *ui.Context) *ui.Element { return nil }
 
 func TestMigrationBuilderCallbacks(t *testing.T) {
 	source := `package app
-import "github.com/egoist/mygo/ui"
+import "github.com/Gaurav-Gosain/mygo/ui"
 func view(c *ui.Context) {
  ui.List(c, nil, 5, func(i int) { ui.Text(c, "row") })
  ui.Table(c, nil, nil, 5, func(row, col int) { ui.Text(c, "cell") })
@@ -131,7 +131,7 @@ func view(c *ui.Context) {
 }
 
 func TestMigrationDotImportRequiresReview(t *testing.T) {
-	r, err := File("app.go", []byte("package app\nimport . \"github.com/egoist/mygo/ui\"\n"))
+	r, err := File("app.go", []byte("package app\nimport . \"github.com/Gaurav-Gosain/mygo/ui\"\n"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -142,7 +142,7 @@ func TestMigrationDotImportRequiresReview(t *testing.T) {
 
 func TestMigrationDoesNotChangeOtherBuilders(t *testing.T) {
 	source := `package app
-import "github.com/egoist/mygo/ui"
+import "github.com/Gaurav-Gosain/mygo/ui"
 func render(c *ui.Context, foreign Other) {
  foreign.Children(func() { println("foreign") })
  ui.Column(c).Children(func() { ui.Text(c,"UI") })
@@ -159,7 +159,7 @@ func render(c *ui.Context, foreign Other) {
 
 func TestMigrationKeysBeforeConstruction(t *testing.T) {
 	source := `package app
-import native "github.com/egoist/mygo/ui"
+import native "github.com/Gaurav-Gosain/mygo/ui"
 func view(c *native.Context,v *bool){
  native.Checkbox(c,v,"Done").Disabled(false).Key("done").OnChange(func(){})
  if c!=nil { println("context") }
@@ -184,17 +184,17 @@ func view(c *native.Context,v *bool){
 func TestMigrationSharesPackageFieldsAndTupleHelpers(t *testing.T) {
 	sources := map[string][]byte{
 		"app/window.go": []byte(`package app
-import native "github.com/egoist/mygo/ui"
+import native "github.com/Gaurav-Gosain/mygo/ui"
 type window struct { element *native.Element; other *int }
 `),
 		"app/view.go": []byte(`package app
-import "github.com/egoist/mygo/ui"
+import "github.com/Gaurav-Gosain/mygo/ui"
 func(w *window)view(c *ui.Context){if w.element!=nil{w.element.Focus()};if w.other!=nil{println(*w.other)}}
 func newWindow()(*window,int){return &window{},0}
 func makeElement(c *ui.Context)*ui.Element{return ui.Text(c,"hello")}
 `),
 		"app/view_test.go": []byte(`package app
-import "github.com/egoist/mygo/ui"
+import "github.com/Gaurav-Gosain/mygo/ui"
 func check(c *ui.Context){w,_:=newWindow();if w.element==nil{w.element=makeElement(c)};e:=makeElement(c);if e!=nil{e.Focus()}}
 `),
 	}

@@ -129,7 +129,7 @@ func Files(sources map[string][]byte) (map[string]Result, error) {
 
 func importAlias(f *ast.File) string {
 	for _, im := range f.Imports {
-		if strings.Trim(im.Path.Value, "\"") == "github.com/egoist/mygo/ui" {
+		if strings.Trim(im.Path.Value, "\"") == "github.com/Gaurav-Gosain/mygo/ui" {
 			if im.Name != nil {
 				return im.Name.Name
 			}

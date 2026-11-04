@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/egoist/mygo/plugins/terminal/internal/vt"
+	"github.com/Gaurav-Gosain/mygo/plugins/terminal/internal/vt"
 )
 
 // viewportText is the text of the rows the viewport shows, and where it is.

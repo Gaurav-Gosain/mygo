@@ -3,7 +3,7 @@ package ui
 import (
 	"testing"
 
-	"github.com/egoist/mygo/internal/text"
+	"github.com/Gaurav-Gosain/mygo/internal/text"
 )
 
 func TestLetterSpacingAndFeatures(t *testing.T) {

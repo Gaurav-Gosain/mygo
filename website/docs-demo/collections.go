@@ -7,7 +7,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 // Icons of the collections' demos.

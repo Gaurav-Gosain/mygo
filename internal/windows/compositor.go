@@ -8,7 +8,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/egoist/mygo/internal/gpu/d3d11/device"
+	"github.com/Gaurav-Gosain/mygo/internal/gpu/d3d11/device"
 )
 
 // A window with a material behind it has no redirection bitmap

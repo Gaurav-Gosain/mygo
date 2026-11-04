@@ -8,9 +8,9 @@ package main
 import (
 	"log"
 
-	"github.com/egoist/mygo"
-	"github.com/egoist/mygo/plugins/terminal"
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo"
+	"github.com/Gaurav-Gosain/mygo/plugins/terminal"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 func main() {

@@ -4,7 +4,7 @@
  * plugin with those directories:
  *
  * ```go
- * mygo.Use(watch.New(watch.Options{ // github.com/egoist/mygo/plugins/watch
+ * mygo.Use(watch.New(watch.Options{ // github.com/Gaurav-Gosain/mygo/plugins/watch
  * 	Roots: map[string]watch.Root{"project": {Path: dir, Recursive: true}},
  * }))
  * ```

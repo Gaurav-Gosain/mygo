@@ -1,6 +1,6 @@
 package ui
 
-import "github.com/egoist/mygo/internal/text"
+import "github.com/Gaurav-Gosain/mygo/internal/text"
 
 // formBuild is a Form being built: the boxes of its fields' labels, which
 // its layout makes as wide as the widest.

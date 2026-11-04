@@ -3,8 +3,8 @@ package ui
 import (
 	"testing"
 
-	"github.com/egoist/mygo/internal/platform"
-	"github.com/egoist/mygo/internal/surface"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/surface"
 )
 
 // occludedSurface is a testSurface that can be out of sight, counting the

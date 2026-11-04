@@ -4,7 +4,7 @@ import (
 	"errors"
 	"math"
 
-	"github.com/egoist/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
 )
 
 // stubEngine lays out text without fonts where the system has no text

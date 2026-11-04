@@ -310,3 +310,45 @@ func TestPrependHistoryOffLock(t *testing.T) {
 		t.Errorf("rang %d times, want 1", bells)
 	}
 }
+
+// TestPrependHistoryPastLimit adds more rows than the scrollback's limit
+// holds to a scrollback that is full: the rows asked for stay, where the
+// limit let go of them at once before.
+func TestPrependHistoryPastLimit(t *testing.T) {
+	loadLib(t)
+	term, err := New(Options{Conn: newPipe(), Scrollback: 1 << 20})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { term.Close() })
+	term.Resize(80, 10)
+	total := func() int {
+		term.mu.Lock()
+		defer term.mu.Unlock()
+		return int(term.term.Scrollbar().Total)
+	}
+	var recent strings.Builder
+	for i := range 20000 {
+		recent.WriteString("new " + itoa(i) + "\r\n")
+	}
+	term.Feed([]byte(recent.String()))
+	full := total()
+	t.Logf("a full scrollback holds %d rows", full)
+	if full >= 20000 {
+		t.Fatalf("the limit kept all %d rows: the test needs a full scrollback", full)
+	}
+	for round := range 3 {
+		var older strings.Builder
+		for i := range 1000 {
+			older.WriteString("old " + itoa(round) + " " + itoa(i) + "\r\n")
+		}
+		before := total()
+		added, err := term.PrependHistory([]byte(older.String()))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if added != 1000 || total() != before+1000 {
+			t.Fatalf("round %d: added %d, scrollback %d -> %d; want 1000 more", round, added, before, total())
+		}
+	}
+}

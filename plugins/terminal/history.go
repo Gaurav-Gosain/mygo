@@ -52,6 +52,10 @@ func (t *Terminal) PrependHistory(rows []byte) (int, error) {
 	}
 	s := t.snapshotFor()
 	t.prep = &prepending{}
+	// The rows come on top of what the scrollback holds, which may be all
+	// its limit allows: the new emulator's limit grows by what they take,
+	// or it would let go of them at once.
+	t.prepended += prependCost(rows, s.size.cols)
 	t.mu.Unlock()
 
 	quiet := &quietVT{on: true, size: s.size, dark: s.dark}
@@ -97,6 +101,19 @@ func (t *Terminal) PrependHistory(rows []byte) (int, error) {
 	t.mu.Unlock()
 	t.redraw()
 	return max(added, 0), nil
+}
+
+// prependCost is about how many bytes of scrollback rows take at cols
+// columns: Ghostty's pages hold a cell in 8 bytes and a row in 8 more, and
+// a row soft wrapped at cols takes as many rows as it wraps to. Twice that
+// covers the pages' own room: a full scrollback of 80 columns holds a row
+// for each 1.1 KB of its limit.
+func prependCost(rows []byte, cols int) int {
+	n := 0
+	for line := range bytes.SplitSeq(rows, []byte("\n")) {
+		n += 1 + len(line)/max(cols, 1)
+	}
+	return n * (cols*8 + 8) * 2
 }
 
 // prependBuilt, for tests, runs once PrependHistory built the new

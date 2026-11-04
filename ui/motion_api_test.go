@@ -4,6 +4,8 @@ import (
 	"math"
 	"testing"
 	"time"
+
+	"github.com/egoist/mygo/internal/platform"
 )
 
 func TestSpringDurationAndBounce(t *testing.T) {
@@ -307,6 +309,77 @@ func TestDragVelocity(t *testing.T) {
 	}
 }
 
+// TestDraggedBeforeRelease reports the moves no frame read as the pointer
+// lets go, the release's own and those just before it, while the element
+// is still pressed; the press ends, and clicks, in the pass after.
+func TestDraggedBeforeRelease(t *testing.T) {
+	var moved float32
+	var held bool
+	clicks := 0
+	tt := coreNewTester(func(c *context) {
+		b := coreBox(c).Size(200, 100)
+		var dx float32
+		dx, _, held = b.Dragged()
+		moved += dx
+		if b.Clicked() {
+			clicks++
+		}
+	}, 300, 150)
+	tt.Press(10, 50)
+	tt.Move(40, 50)
+	tt.Release(70, 50)
+	if moved != 60 || held || clicks != 1 {
+		t.Fatalf("let go 60 DIPs right: moved %v, still pressed %v, %d clicks", moved, held, clicks)
+	}
+	moved = 0
+	tt.Press(10, 50)
+	tt.rt.event(platform.SurfaceEvent{Kind: platform.PointerMove, X: 40, Y: 50})
+	tt.rt.event(platform.SurfaceEvent{Kind: platform.PointerUp, X: 70, Y: 50})
+	tt.rt.event(platform.SurfaceEvent{Kind: platform.PointerMove, X: 150, Y: 50})
+	tt.settle()
+	if moved != 60 || held {
+		t.Errorf("moved 60 DIPs right and let go before a frame: moved %v, still pressed %v", moved, held)
+	}
+	// A press that comes after the release, before a frame, holds the
+	// element again.
+	moved, clicks = 0, 0
+	tt.Press(10, 50)
+	tt.rt.event(platform.SurfaceEvent{Kind: platform.PointerMove, X: 40, Y: 50})
+	tt.rt.event(platform.SurfaceEvent{Kind: platform.PointerUp, X: 70, Y: 50})
+	tt.rt.event(platform.SurfaceEvent{Kind: platform.PointerDown, X: 70, Y: 50})
+	tt.settle()
+	if moved != 60 || !held || clicks != 1 {
+		t.Errorf("pressed again after a release before a frame: moved %v, still pressed %v, %d clicks, want 60, pressed, 1", moved, held, clicks)
+	}
+	tt.Release(70, 50)
+	if held || clicks != 2 {
+		t.Errorf("let go of the second press: still pressed %v, %d clicks, want 2", held, clicks)
+	}
+}
+
+// TestPressedBeforeRelease shows a view reading the pointer while the
+// element is pressed where the pointer let go of it, though no frame came
+// between the moves and the release, nor between the release and a move
+// on, and the press ends in the same frame.
+func TestPressedBeforeRelease(t *testing.T) {
+	var x float32
+	var held bool
+	tt := coreNewTester(func(c *context) {
+		b := coreBox(c).Size(200, 100)
+		if held = b.Pressed(); held {
+			x, _, _ = b.PointerPosition()
+		}
+	}, 300, 150)
+	tt.Press(10, 50)
+	tt.rt.event(platform.SurfaceEvent{Kind: platform.PointerMove, X: 40, Y: 50})
+	tt.rt.event(platform.SurfaceEvent{Kind: platform.PointerUp, X: 70, Y: 50})
+	tt.rt.event(platform.SurfaceEvent{Kind: platform.PointerMove, X: 250, Y: 50})
+	tt.settle()
+	if x != 70 || held {
+		t.Errorf("let go at 70 before a frame: held at %v, still pressed %v", x, held)
+	}
+}
+
 func TestInView(t *testing.T) {
 	var top, bottom *node
 	var topIn, bottomIn bool
@@ -396,6 +469,28 @@ func TestAnimateColor(t *testing.T) {
 	tt.Frame()
 	if shown != target || !settled {
 		t.Errorf("over, the color is %+v", shown)
+	}
+}
+
+func TestAnimateColorInOklab(t *testing.T) {
+	target := RGB(255, 255, 0)
+	var lab, srgb Color
+	tt, now := motionTester(func(c *context) {
+		e := coreBox(c)
+		a := Animation{Duration: 100 * time.Millisecond, Ease: Linear}
+		srgb = e.AnimateColor("srgb", target, a)
+		a.Oklab = true
+		lab = e.AnimateColor("lab", target, a)
+	})
+	target = RGB(0, 0, 255)
+	tt.Frame()
+	*now = now.Add(50 * time.Millisecond)
+	tt.Frame()
+	if want := RGB(255, 255, 0).MixOklab(target, 0.5); lab != want {
+		t.Errorf("halfway in Oklab, the color is %+v, want %+v", lab, want)
+	}
+	if want := RGB(255, 255, 0).Mix(target, 0.5); srgb != want {
+		t.Errorf("halfway in sRGB, the color is %+v, want %+v", srgb, want)
 	}
 }
 

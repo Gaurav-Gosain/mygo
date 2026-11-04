@@ -316,6 +316,43 @@ func TestFlexOptions(t *testing.T) {
 			t.Errorf("a box limited to 50%% of a 400-high column is %g high, want 200, as MaxHeight(200) gives %g", column["pct"].H, pixels["px"].H)
 		}
 	})
+	t.Run("bounds in DIPs and percentages together", func(t *testing.T) {
+		// As CSS's max-width: min(78%, 340px) and min-width: max(50%,
+		// 100px), in either order, across the parent's main axis and its
+		// cross axis: the smaller maximum and the larger minimum apply.
+		view := func(w float32) func(c *context) {
+			return func(c *context) {
+				coreColumn(c).Width(w).Height(400).AlignItems(Start).Children(func() {
+					coreBox(c).Width(1000).Height(10).MaxWidthPercent(78).MaxWidth(340).Label("max")
+					coreBox(c).Width(1000).Height(10).MaxWidth(340).MaxWidthPercent(78).Label("max2")
+					coreBox(c).Size(10, 10).MinWidthPercent(50).MinWidth(100).Label("min")
+					coreBox(c).Size(10, 300).Shrink(0).MaxHeightPercent(50).MaxHeight(150).Label("maxh")
+				})
+				coreRow(c).Width(w).Height(50).Children(func() {
+					coreBox(c).Size(1000, 10).Shrink(0).MaxWidthPercent(78).MaxWidth(340).Label("row")
+					coreBox(c).Size(10, 10).MinWidth(100).MinWidthPercent(50).Label("rowmin")
+				})
+			}
+		}
+		labels := []string{"max", "max2", "min", "maxh", "row", "rowmin"}
+		wide := boxes(t, view(600), 700, 500, labels...)
+		// 78% of 600 is 468, past 340; half of 400 is 200, past 150.
+		for k, w := range map[string]float32{"max": 340, "max2": 340, "min": 300, "row": 340, "rowmin": 300} {
+			if math.Abs(float64(wide[k].W-w)) > 0.5 {
+				t.Errorf("in 600: %s is %g wide, want %g", k, wide[k].W, w)
+			}
+		}
+		if math.Abs(float64(wide["maxh"].H-150)) > 0.5 {
+			t.Errorf("maxh is %g high, want 150", wide["maxh"].H)
+		}
+		narrow := boxes(t, view(150), 700, 500, labels...)
+		// 78% of 150 is 117, within 340; half of 150 is 75, under 100.
+		for k, w := range map[string]float32{"max": 117, "max2": 117, "min": 100, "row": 117, "rowmin": 100} {
+			if math.Abs(float64(narrow[k].W-w)) > 0.5 {
+				t.Errorf("in 150: %s is %g wide, want %g", k, narrow[k].W, w)
+			}
+		}
+	})
 	t.Run("absolute in the padding box", func(t *testing.T) {
 		// As in CSS, insets are measured from inside the border, whatever
 		// the padding, and percentages from the padding box's size.
@@ -451,6 +488,91 @@ func TestTextDecorations(t *testing.T) {
 		r, _ := tt.Find("t")
 		if n, rows := reds(tt.Image(), Rect{r.X, r.Y, r.W, r.H + 4}); !tc.test(n, rows) {
 			t.Errorf("%s: %d red pixels on %d rows", tc.name, n, len(rows))
+		}
+	}
+}
+
+// TestUnderlineOffset checks text-underline-offset: the top of the
+// underline that many DIPs below the baseline, set on the text or above
+// it, of an inline element and of a span, as thick as without it.
+func TestUnderlineOffset(t *testing.T) {
+	red := RGB(255, 0, 0)
+	// rows returns the rows of red pixels, from the baseline of the first
+	// line of the text view returns.
+	rows := func(view func(c *context) *node) []int {
+		t.Helper()
+		var text *node
+		tt := coreNewTester(func(c *context) {
+			coreColumn(c).Padding(10).AlignItems(Start).Children(func() { text = view(c) })
+		}, 300, 80)
+		if text == nil || text.tl == nil {
+			t.Fatal("no text laid out")
+		}
+		base := int(math.Round(float64(text.y + text.contentY() + text.tl.Lines[0].Baseline)))
+		img := tt.Image()
+		var out []int
+		for y := 0; y < img.Bounds().Dy(); y++ {
+			for x := 0; x < img.Bounds().Dx(); x++ {
+				if c := img.RGBAAt(x, y); c.R > 200 && c.G < 60 && c.B < 60 {
+					out = append(out, y-base)
+					break
+				}
+			}
+		}
+		return out
+	}
+	plain := rows(func(c *context) *node { return coreText(c, "Hello").Underline().DecorationColor(red) })
+	if len(plain) == 0 {
+		t.Fatal("no underline")
+	}
+	for _, off := range []float32{0, 3, 6, -2} {
+		// Above the baseline, an underline skipping ink (macOS) skips all of
+		// Hello; quotes have no ink there.
+		word := "Hello"
+		if off < 0 {
+			word = `""`
+		}
+		for _, v := range []struct {
+			name string
+			view func(c *context) *node
+		}{
+			{"text", func(c *context) *node {
+				return coreText(c, word).Underline().DecorationColor(red).UnderlineOffset(off)
+			}},
+			{"inherited", func(c *context) *node {
+				var e *node
+				coreBox(c).UnderlineOffset(off).Children(func() { e = coreText(c, word).Underline().DecorationColor(red) })
+				return e
+			}},
+			{"inline", func(c *context) *node {
+				return coreText(c, "").Children(func() {
+					coreText(c, word).Underline().DecorationColor(red).UnderlineOffset(off)
+				})
+			}},
+		} {
+			if got := rows(v.view); len(got) != len(plain) || got[0] != int(off) {
+				t.Errorf("%s, offset %v: red rows %v from the baseline, %v without an offset", v.name, off, got, plain)
+			}
+		}
+	}
+	// A span's offset, and that of the text around it.
+	for _, v := range []struct {
+		name string
+		view func(c *context) *node
+		want int
+	}{
+		{"span", func(c *context) *node {
+			return coreRichText(c, Span{Text: "Hello", Underline: true, DecorationColor: red, UnderlineOffset: 5})
+		}, 5},
+		{"around a span", func(c *context) *node {
+			return coreRichText(c, Span{Text: "Hello", Underline: true, DecorationColor: red}).UnderlineOffset(4)
+		}, 4},
+		{"span over the text's", func(c *context) *node {
+			return coreRichText(c, Span{Text: "Hello", Underline: true, DecorationColor: red, UnderlineOffset: 2}).UnderlineOffset(6)
+		}, 2},
+	} {
+		if got := rows(v.view); len(got) != len(plain) || got[0] != v.want {
+			t.Errorf("%s: red rows %v from the baseline, want from %d", v.name, got, v.want)
 		}
 	}
 }

@@ -82,7 +82,7 @@ var (
 	cbSurfaceFocusIn, cbSurfaceFocusOut, cbSurfaceScale, cbIMCommit ptr
 	cbIMPreedit, cbIMPreeditEnd, cbSurfaceRender, cbAreaContext     ptr
 	cbSurfaceUnrealize, cbSurfaceTick, cbSurfaceGesture             ptr
-	cbRenderTick, cbDrawHidden                                      ptr
+	cbRenderTick, cbDrawHidden, cbWindowGLDamage                    ptr
 	surfaceCursors                                                  = map[platform.Cursor]ptr{}
 )
 
@@ -185,7 +185,9 @@ type surface struct {
 	lastKey ptr
 	// pressing is the key press being handled, which the Tab moving the
 	// focus to a web view passes on to it (TabInto).
-	pressing     ptr
+	pressing ptr
+	// down are the keys held, which tell a press's auto-repeat.
+	down         keysDown
 	lastPointer  ptr
 	clicks       platform.ClickCounter
 	dragContext  ptr
@@ -217,7 +219,65 @@ func (w *window) createSurface() {
 	connect(s.im, "preedit-end", cbIMPreeditEnd, data)
 	s.connectSystem(data)
 	w.surface = s
+	if s.gl && w.b.waylandSurface != nil {
+		connect(w.win, "draw", cbWindowGLDamage, data)
+	}
 }
+
+// wlSurfaceDamage is wl_surface.damage, marshalled by libwayland-client
+// (wl_proxy_marshal_array), which GDK loaded.
+var wlSurfaceDamage struct {
+	once    sync.Once
+	marshal func(proxy ptr, opcode uint32, args *[4]uint64)
+}
+
+// damageGLPaint tells the compositor what the paint of the window being
+// drawn changes, in the window's coordinates, which GTK 3 tells it wrong
+// at a scale of 2 or more once it composites the window with OpenGL, as
+// it does from the first context of the window's GtkGLArea. GTK passes
+// what a frame changed to eglSwapBuffersWithDamageEXT unscaled, flipped
+// with the window's height (gdk/wayland/gdkglcontext-wayland.c, fixed in
+// GTK 4 only), and EGL takes rectangles of the buffer's pixels: at a scale
+// of 2, a change at the top of the window is reported in its lower half,
+// at half the size. A compositor that redraws only what it was told
+// changed (Mesa's llvmpipe tells it whole frames did, a GPU's buffers what
+// GTK said) then shows a title button the pointer hovers flickering or
+// gone, and a shadow missing on some sides (#1071). The damage of
+// wl_surface.damage, in the surface's coordinates, joins EGL's in the
+// commit of the swap that follows the paint: the area GTK repaints
+// (cairo's clip in the toplevel's draw signal), with what the age of the
+// back buffer had it repaint too.
+func (w *window) damageGLPaint(cr ptr) {
+	if gtkWidgetGetScaleFactor(w.win) < 2 {
+		return
+	}
+	wl := w.b.waylandSurface(gtkWidgetGetWindow(w.win))
+	d := &wlSurfaceDamage
+	d.once.Do(func() {
+		if lib, err := purego.Dlopen("libwayland-client.so.0", purego.RTLD_NOW|purego.RTLD_GLOBAL); err == nil {
+			bind(lib, &d.marshal, "wl_proxy_marshal_array")
+		}
+	})
+	if wl == 0 || d.marshal == nil {
+		return
+	}
+	var x0, y0, x1, y1 float64
+	cairoClipExtents(cr, &x0, &y0, &x1, &y1)
+	r := image.Rect(int(math.Floor(x0)), int(math.Floor(y0)), int(math.Ceil(x1)), int(math.Ceil(y1)))
+	if r.Empty() {
+		return
+	}
+	if testGLDamage != nil {
+		testGLDamage(w, r)
+	}
+	// wl_argument is a union of 8 bytes, whose int32 is its first 4.
+	arg := func(v int) uint64 { return uint64(uint32(int32(v))) }
+	const damage = 2 // wl_surface's request
+	d.marshal(wl, damage, &[4]uint64{arg(r.Min.X), arg(r.Min.Y), arg(r.Dx()), arg(r.Dy())})
+}
+
+// testGLDamage, when set, sees each area damageGLPaint damages.
+var testGLDamage func(w *window, r image.Rectangle)
 
 // newArea creates the surface's widget, a GtkGLArea or a GtkDrawingArea
 // that assistive technology sees the content of, and connects its input.
@@ -834,6 +894,13 @@ func initSurfaceCallbacks() {
 		}
 		return ctx
 	})
+	// The toplevel's draw signal, before GTK draws it: the window paints.
+	cbWindowGLDamage = purego.NewCallback(func(widget, cr, data ptr) bool {
+		if w := b().window(data); w != nil {
+			w.damageGLPaint(cr)
+		}
+		return false
+	})
 	cbDrawHidden = purego.NewCallback(func(data ptr) int32 {
 		if s := b().surfaceOf(data); s != nil {
 			s.drawHidden()
@@ -1016,9 +1083,14 @@ func initSurfaceCallbacks() {
 			return false
 		}
 		kind := platform.KeyPressed
+		repeat := false
 		if field[int32](event, 0) == 9 { // GDK_KEY_RELEASE
 			kind = platform.KeyReleased
+			s.down.release(field[uint16](event, 48))
 		} else {
+			// Before the input method sees it, which may take the press
+			// or the release.
+			repeat = s.down.press(field[uint16](event, 48))
 			s.clientComposition.Reset()
 			if s.lastKey != 0 {
 				gdkEventFree(s.lastKey)
@@ -1064,7 +1136,7 @@ func initSurfaceCallbacks() {
 			s.pressing = event
 			defer func() { s.pressing = 0 }()
 		}
-		s.send(platform.SurfaceEvent{Kind: kind, Key: k, PhysicalKey: physical, Mods: mods})
+		s.send(platform.SurfaceEvent{Kind: kind, Key: k, PhysicalKey: physical, Mods: mods, Repeat: repeat})
 		return true
 	})
 	cbSurfaceFocusIn = purego.NewCallback(func(widget, event, data ptr) bool {
@@ -1079,6 +1151,7 @@ func initSurfaceCallbacks() {
 	cbSurfaceFocusOut = purego.NewCallback(func(widget, event, data ptr) bool {
 		if s := b().surfaceOf(data); s != nil {
 			gtkIMContextFocusOut(s.im)
+			s.down.clear()
 			s.send(platform.SurfaceEvent{Kind: platform.SurfaceBlur})
 		}
 		return false

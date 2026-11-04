@@ -88,6 +88,11 @@ const (
 	// RoleHeading is the title of a section, named by its text, its rank
 	// set with Level.
 	RoleHeading
+	// RoleNavigation is a landmark holding links that move around the
+	// app or a document, as a breadcrumb trail (Breadcrumbs) or a
+	// navigation bar: screen readers list it among the window's
+	// landmarks, and jump to it.
+	RoleNavigation
 )
 
 // Role sets what the element is to assistive technology, for an element
@@ -123,8 +128,51 @@ func (e *node) Expanded(open bool) *node {
 	return e
 }
 
+// Busy tells assistive technology whether the element's content is about
+// to change, as a region loading, or one updated in several steps:
+// screen readers wait until it is no longer busy to read what changed in
+// it. A placeholder standing in for the content, as a skeleton or a
+// spinner, says what is happening (a RoleStatus labelled "Loading").
+func (e *node) Busy(on bool) *node {
+	e.busy = on
+	return e
+}
+
+// Current is the item an element is the current one of, among those
+// around it (Element.Current), as ARIA's aria-current says.
+type Current uint8
+
+const (
+	// CurrentNone is not current.
+	CurrentNone Current = iota
+	// CurrentItem is the current item of a set, aria-current="true".
+	CurrentItem
+	// CurrentPage is the page the user is on: the last crumb of a
+	// breadcrumb trail, or the link of a navigation bar to the page shown.
+	CurrentPage
+	// CurrentStep is the step of a process the user is at, as in a
+	// wizard's steps.
+	CurrentStep
+	// CurrentLocation is the place shown, as in a flow chart or a map.
+	CurrentLocation
+	// CurrentDate is today in a calendar, and CurrentTime now in a
+	// timetable.
+	CurrentDate
+	CurrentTime
+)
+
+// Current tells assistive technology that the element is the current one
+// of the items around it, as the page the user is on in a breadcrumb
+// trail or a navigation bar, which screen readers read with it ("current
+// page"). CurrentNone takes it back.
+func (e *node) Current(kind Current) *node {
+	e.current = kind
+	return e
+}
+
 // Value sets what assistive technology reads as the element's value, as
-// the choice a button opening a popup shows.
+// the choice a button opening a popup shows, or the text of a range's
+// value beside its number (aria-valuetext), as "3 of 10 steps".
 func (e *node) Value(s string) *node {
 	e.accValue = s
 	return e
@@ -175,7 +223,9 @@ func (e *node) accessRole() (platform.AccessRole, bool) {
 		return platform.RoleButton, true
 	case e.flags&(flagScrollX|flagScrollY) != 0:
 		return platform.RoleScroll, true
-	case e.label != "" || e.flags&flagFocusable != 0:
+	case e.label != "" || e.flags&flagFocusable != 0 || e.busy || e.current != CurrentNone:
+		// A state of its own shows the element too, as ARIA's global
+		// states do a generic element.
 		return platform.RoleGroup, true
 	}
 	return 0, false
@@ -187,7 +237,7 @@ func leafRole(r platform.AccessRole) bool {
 	switch r {
 	case platform.RoleGroup, platform.RoleList, platform.RoleScroll, platform.RoleDialog, platform.RoleAlertDialog, platform.RolePopup, platform.RoleStatus,
 		platform.RoleTabList, platform.RoleTable, platform.RoleRow, platform.RoleCell, platform.RoleTree, platform.RoleListItem,
-		platform.RoleToolbar, platform.RoleRadioGroup, platform.RoleMenu, platform.RoleMenuBar:
+		platform.RoleToolbar, platform.RoleRadioGroup, platform.RoleMenu, platform.RoleMenuBar, platform.RoleNavigation:
 		return false
 	}
 	return true
@@ -197,8 +247,9 @@ func leafRole(r platform.AccessRole) bool {
 // by spaces. An element inside it with a Label gives its label in place
 // of its texts, as a name from content takes a descendant's aria-label on
 // the web: a row reads "Branch main (checked out)" rather than the "✓
-// main" drawn for it. Assistive technology names elements by it every
-// frame, so a single text is returned as it is, without a copy.
+// main" drawn for it; one hidden from assistive technology
+// (AccessHidden) gives nothing. Assistive technology names elements by it
+// every frame, so a single text is returned as it is, without a copy.
 func (e *node) innerText() string {
 	if e.flags&flagInvisible != 0 || e.hidden {
 		return ""
@@ -224,7 +275,7 @@ type innerTexts struct {
 }
 
 func (t *innerTexts) walk(e *node) {
-	if e.flags&flagInvisible != 0 || e.hidden {
+	if e.flags&flagInvisible != 0 || e.hidden || e.accessHidden {
 		return
 	}
 	if e.label != "" {
@@ -324,7 +375,7 @@ func (e *node) rowsOfElement() *listFrame {
 // node parent; scrolled is set inside a scroll container, and focused gets
 // the element with the keyboard focus.
 func (rt *engine) accessElement(t *platform.AccessTree, e *node, parent int, scrolled bool, focused **node) {
-	if e.flags&(flagInvisible|flagInert) != 0 || e.hidden {
+	if e.flags&(flagInvisible|flagInert) != 0 || e.hidden || e.accessHidden {
 		return
 	}
 	if e.id == rt.focused {
@@ -438,6 +489,10 @@ func (rt *engine) accessDetails(e *node, n *platform.AccessNode) {
 	if e.expandable {
 		n.States |= platform.AccessExpandable
 	}
+	if e.busy {
+		n.States |= platform.AccessBusy
+	}
+	n.Current = platform.AccessCurrent(e.current)
 	n.Level = e.level
 	n.Value = e.accValue
 	if e.hasRange {
@@ -531,7 +586,8 @@ func (rt *engine) accessibilityOn() {
 // of the last frame, as the keyboard or the pointer would.
 func (rt *engine) accessAction(ev platform.SurfaceEvent) {
 	s := rt.states[ev.ID]
-	if s == nil || s.flags&flagDisabled != 0 {
+	// What is hidden from it, as a page leaving, takes none of its actions.
+	if s == nil || s.flags&flagDisabled != 0 || s.accessHidden {
 		return
 	}
 	switch ev.Action {
@@ -541,8 +597,7 @@ func (rt *engine) accessAction(ev platform.SurfaceEvent) {
 			break
 		}
 		if s.flags&flagClickable != 0 {
-			s.clicks++
-			s.clickMods = 0
+			s.click(0)
 		} else {
 			rt.focusOn(s)
 		}
@@ -553,8 +608,7 @@ func (rt *engine) accessAction(ev platform.SurfaceEvent) {
 		if s.flags&flagChoosable != 0 {
 			// A row of a list choosing rows: its list takes the focus for
 			// it, choosing it.
-			s.clicks++
-			s.clickMods = 0
+			s.click(0)
 			break
 		}
 		rt.focusOn(s)
@@ -587,7 +641,7 @@ func (rt *engine) accessAction(ev platform.SurfaceEvent) {
 		if ev.Action == platform.AccessDecrement {
 			k = down
 		}
-		rt.keys = append(rt.keys, keyEvent{0, k})
+		rt.keys = append(rt.keys, keyEvent{key: k})
 	case platform.AccessExpand, platform.AccessCollapse:
 		// The tree opens or closes the item as it builds it.
 		s.expand = 1

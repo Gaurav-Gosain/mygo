@@ -41,6 +41,10 @@ type Painter struct {
 	// window's scene, and asked that it asked to be painted again (see
 	// paintPart).
 	drawing, asked bool
+	// lifting is the element flying (ElementTransition.Fly) being painted
+	// over the rest of its layer (matches.paint), which elsewhere paints
+	// nothing.
+	lifting *node
 }
 
 // opaqueBox is the box of an element painting an opaque background, and
@@ -193,6 +197,18 @@ func (e *node) shadowMargin() float32 {
 	return margin
 }
 
+// ringMargin returns how far beyond its box the focus ring of the
+// element may reach, and a DIP more, for its edge's antialiasing: 4 for
+// the theme's ring by default.
+func (e *node) ringMargin() float32 {
+	t := e.c.window
+	off := t.FocusRingOffset
+	if e.ringSet&ringOffsetSet != 0 {
+		off = e.ringOffset
+	}
+	return max(4, off+t.focusRingWidth()+1)
+}
+
 // setInk sets e's ink from vis, its box in the window, once commit set
 // those of the elements inside it: the union of the areas within which
 // element paints its own content (visible, from its box grown by its
@@ -205,9 +221,10 @@ func (e *node) shadowMargin() float32 {
 // whose words paint over its paragraph (paintInline); effects and blurs,
 // which draw their content on a layer reaching beyond it; dividers, laid
 // across a container; the debug overlay, over margins; exit transitions'
-// copies; and color transitions, which note the frames they paint in.
+// copies; and color and shadow transitions, which note the frames they
+// paint in.
 func (e *node) setInk(vis Rect) {
-	m := e.shadowMargin() + 4
+	m := e.shadowMargin() + e.ringMargin()
 	ink := [4]float32{vis.X - m, vis.Y - m, vis.X + vis.W + m, vis.Y + vis.H + m}
 	no := e.isInline() || e.kind == kindText && e.first != nil || e.effect != nil || e.blur > 0 ||
 		e.flags&(flagDividers|flagDebug) != 0 || e.ghosts || e.leaving != 0 || e.st.trec != nil
@@ -233,7 +250,7 @@ func (p *Painter) paintable(e *node) bool {
 }
 
 func (p *Painter) element(e *node) {
-	if e.hidden {
+	if e.hidden || e.lift && p.lifting != e {
 		return
 	}
 	savedTransform, savedInline, savedTheme := p.transform, p.inline, p.theme
@@ -248,6 +265,9 @@ func (p *Painter) element(e *node) {
 	}
 	if r := e.st.trec; r != nil && r.built == p.rt.frame && r.elem == e {
 		p.rt.animateColors(e, r)
+		if animateShadows != nil {
+			animateShadows(p.rt, e, r)
+		}
 	}
 	if e.flags&flagInvisible != 0 || e.backface && e.transform.facesAway() {
 		return
@@ -256,11 +276,22 @@ func (p *Painter) element(e *node) {
 		p.paintInline(e)
 		return
 	}
+	if e.clipping != nil && !e.effecting {
+		// Around its effect's or its blur's layer too, as CSS's clip-path
+		// and mask go after its filter.
+		savedClip := p.clip
+		p.clipSelf(e)
+		defer func() { p.popClip(); p.clip = savedClip }()
+		if p.clip.W <= 0 || p.clip.H <= 0 {
+			// Nothing of it shows, as an inset wiping it in starts.
+			return
+		}
+	}
 	if p.paintEffect(e) {
 		return
 	}
 	saved := p.opacity
-	if e.flags&flagDisabled != 0 {
+	if e.flags&flagDisabled != 0 && !e.undimmed {
 		p.opacity *= 0.5
 	}
 	if e.opacitySet {
@@ -281,8 +312,11 @@ func (p *Painter) element(e *node) {
 	// What the element paints lands on an opaque background when all of
 	// it that shows does.
 	p.opaque = p.covered(intersect(box, p.clip))
-	if e.world.Set {
-		// Transformed glyphs are drawn with grayscale coverage.
+	if e.world.Set && (p.lifting == nil || !translates(e.world)) {
+		// Transformed glyphs are drawn with grayscale coverage; but those
+		// of an element flying, which a translation shows where it is
+		// (matches.pin), as at rest, which renderers make gray while it
+		// moves, so that they are the text at rest once there.
 		p.opaque = false
 	}
 	margin := e.shadowMargin()
@@ -357,17 +391,41 @@ func (p *Painter) element(e *node) {
 				}
 			}
 		}
-		for c := e.first; c != nil; c = c.next {
-			if c.flags&flagAbsolute == 0 && p.paintable(c) {
-				p.element(c)
+		if e.zOrder && e != e.c.overlay && zPaint != nil {
+			zPaint(p, e)
+		} else {
+			// Elements flying go over their layer: the window's content, under
+			// its overlays, or their overlay, under those after it.
+			m := p.rt.matches
+			layers := m != nil && e == e.c.overlay
+			for c := e.first; c != nil; c = c.next {
+				if c.flags&flagAbsolute == 0 && !c.sticky && p.paintable(c) {
+					p.element(c)
+					if layers {
+						m.paint(p, c)
+					}
+				}
 			}
-		}
-		if e.flags&flagDividers != 0 && !e.grid {
-			p.dividers(e)
-		}
-		for c := e.first; c != nil; c = c.next {
-			if c.flags&flagAbsolute != 0 && c.leaving == 0 && p.paintable(c) {
-				p.element(c)
+			if e.flags&flagDividers != 0 && !e.grid {
+				p.dividers(e)
+			}
+			content := m != nil && e.parent == nil
+			for c := e.first; c != nil; c = c.next {
+				if content && c == e.c.overlay {
+					m.paint(p, nil)
+					content = false
+				}
+				// Sticky children paint above the flow too, in their order
+				// among the absolute ones, as CSS's positioned elements do.
+				if (c.flags&flagAbsolute != 0 && c.leaving == 0 || c.flags&flagAbsolute == 0 && c.sticky) && p.paintable(c) {
+					p.element(c)
+					if layers {
+						m.paint(p, c)
+					}
+				}
+			}
+			if content {
+				m.paint(p, nil)
 			}
 		}
 	}
@@ -388,10 +446,16 @@ func (p *Painter) element(e *node) {
 		p.debug(e)
 	}
 	if own && e.kind != kindInput && e.ringShown() {
-		p.FocusRing(box, e.radius)
+		p.focusRingOf(e, box, e.radius)
 	}
 	p.opacity = saved
 	p.opaque, p.under = savedOpaque, p.under[:under]
+}
+
+// translates reports whether m only moves what it transforms.
+func translates(m scene.Affine) bool {
+	_, _, ok := m.Translation()
+	return ok
 }
 
 // covered reports whether an opaque background around the element painting
@@ -853,7 +917,8 @@ func (p *Painter) textForeground(l *text.Layout, x, y float32, color Color, ts t
 	}
 	sys := p.rt.text
 	s := p.scale
-	deco := decoration{underline: ts.underline, wavy: ts.wavy, dotted: ts.dotted, strike: ts.strike, color: ts.decoColor, thick: ts.decoThick}
+	deco := decoration{underline: ts.underline, wavy: ts.wavy, dotted: ts.dotted, strike: ts.strike, solid: ts.solid, color: ts.decoColor, thick: ts.decoThick,
+		offset: ts.decoOffset, hasOffset: ts.set&setDecoOffset != 0}
 	shade := text.ShadeOf(color.R, color.G, color.B)
 	start := int32(len(p.s.Glyphs))
 	// Inline transforms do not change while the text paints; look for them once.
@@ -965,9 +1030,20 @@ func (r *glyphRun) flush(p *Painter, baseline float32) {
 // decoration is how lines go through or under text.
 type decoration struct {
 	underline, wavy, dotted, strike bool
-	// color, if set, is the lines', and thick their thickness in DIPs.
-	color Color
-	thick float32
+	// solid draws the underline through descenders.
+	solid bool
+	// color, if set, is the lines', and thick their thickness in DIPs;
+	// offset, if hasOffset, is how far below the baseline the top of the
+	// underline is, in DIPs.
+	color     Color
+	thick     float32
+	offset    float32
+	hasOffset bool
+}
+
+// lineStyle returns how text's engine draws the lines of d.
+func (d decoration) lineStyle() text.LineStyle {
+	return text.LineStyle{Thick: d.thick, Offset: d.offset, HasOffset: d.hasOffset}
 }
 
 // decorations draws the lines of d along glyphs [i, j) of line li of l,
@@ -1002,7 +1078,11 @@ func (p *Painter) decorationRun(l *text.Layout, li, i, j int, x, y float32, d de
 		if k == text.Underline && !d.underline || k == text.Strikethrough && !d.strike {
 			continue
 		}
-		for _, st := range p.rt.text.Decorate(l, li, i, j, x, y, p.scale, k, d.thick) {
+		kind := k
+		if k == text.Underline && d.solid {
+			kind = text.SolidUnderline
+		}
+		for _, st := range p.rt.text.Decorate(l, li, i, j, x, y, p.scale, kind, d.lineStyle()) {
 			if st.X1 <= st.X0 || st.Bottom <= st.Top {
 				continue
 			}
@@ -1054,19 +1134,20 @@ func (e *node) contentBox() Rect {
 
 func (p *Painter) image(e *node) {
 	if s := e.svg; s != nil {
-		p.drawSVG(s, e.contentBox(), e.fit, e.radius, e.resolvedText().color, e.gray)
+		p.drawSVG(s, e.contentBox(), e.fit, e.objectPos, e.radius, e.resolvedText().color, e.gray)
 		return
 	}
 	img := e.image
 	if img == nil || img.w == 0 || img.h == 0 {
 		return
 	}
-	p.drawBitmap(img, e.contentBox(), e.fit, e.radius, e.gray)
+	p.drawBitmap(img, e.contentBox(), e.fit, e.objectPos, e.radius, e.gray)
 }
 
-// fitIn returns where a picture w×h DIPs goes in box as fit says, and
-// which part of it shows there, as fractions of its size.
-func fitIn(box Rect, w, h float32, fit Fit) (dst, src Rect) {
+// fitIn returns where a picture w×h DIPs goes in box as fit says, placed
+// pos from the middle of the room around it (ObjectPosition), and which
+// part of it shows there, as fractions of its size.
+func fitIn(box Rect, w, h float32, fit Fit, pos [2]float32) (dst, src Rect) {
 	dst, src = box, Rect{0, 0, 1, 1}
 	scale := float32(1)
 	switch fit {
@@ -1079,19 +1160,23 @@ func fitIn(box Rect, w, h float32, fit Fit) (dst, src Rect) {
 	case ScaleDown:
 		scale = min(box.W/w, box.H/h, 1)
 	}
-	dst.W, dst.H = w*scale, h*scale
-	dst.X += (box.W - dst.W) / 2
-	dst.Y += (box.H - dst.H) / 2
+	dst = placeIn(box, w*scale, h*scale, pos)
 	// Only what falls in the box shows.
 	shown := intersect(dst, box)
 	src = Rect{(shown.X - dst.X) / dst.W, (shown.Y - dst.Y) / dst.H, shown.W / dst.W, shown.H / dst.H}
 	return shown, src
 }
 
-func (p *Painter) drawBitmap(img *Bitmap, box Rect, fit Fit, radius [4]float32, gray bool) {
+// placeIn returns the box of a picture w×h DIPs in box, placed pos from
+// the middle of the room around it (ObjectPosition).
+func placeIn(box Rect, w, h float32, pos [2]float32) Rect {
+	return Rect{box.X + (box.W-w)*(0.5+pos[0]), box.Y + (box.H-h)*(0.5+pos[1]), w, h}
+}
+
+func (p *Painter) drawBitmap(img *Bitmap, box Rect, fit Fit, pos [2]float32, radius [4]float32, gray bool) {
 	// A bitmap's own size is its pixels in DIPs, as an Image lays it out.
 	iw, ih := float32(img.w), float32(img.h)
-	dst, frac := fitIn(box, iw, ih, fit)
+	dst, frac := fitIn(box, iw, ih, fit, pos)
 	if dst.W <= 0 || dst.H <= 0 {
 		return
 	}
@@ -1121,8 +1206,10 @@ func (p *Painter) scrollbars(e *node) {
 	}
 	dragging := rt.scrollDrag.st == st
 	// A press takes the bars only where the window shows them
-	// (scrollbarPress).
-	st.barsShown = !e.hideScrollbars && (hovered || dragging)
+	// (scrollbarPress). Kept, they show as on hover, the same thumb on no
+	// track, so that the pointer coming over changes nothing.
+	hide, keep := e.scrollbars()
+	st.barsShown = !hide && (keep || hovered || dragging)
 	if !st.barsShown {
 		return
 	}
@@ -1221,6 +1308,12 @@ func scrollThumb(pos, track, view, content, offset float32) Rect {
 // Fill paints a rounded rectangle.
 func (p *Painter) Fill(r Rect, c Color, radius float32) {
 	p.fill(r, [4]float32{radius, radius, radius, radius}, c, 0, Color{})
+}
+
+// FillRadii paints a rounded rectangle whose corners have radii of their
+// own, clockwise from the top left, as Element.Radius does.
+func (p *Painter) FillRadii(r Rect, radii [4]float32, c Color) {
+	p.fill(r, radii, c, 0, Color{})
 }
 
 // FillGradient paints a rounded rectangle with a gradient.
@@ -1339,10 +1432,10 @@ func (p *Painter) Image(src ImageSource, r Rect, fit Fit) {
 	switch s := src.(type) {
 	case *Bitmap:
 		if s != nil && s.w > 0 && s.h > 0 {
-			p.drawBitmap(s, r, fit, [4]float32{}, false)
+			p.drawBitmap(s, r, fit, [2]float32{}, [4]float32{}, false)
 		}
 	case *SVG:
-		p.drawSVG(s, r, fit, [4]float32{}, p.Theme().Text, false)
+		p.drawSVG(s, r, fit, [2]float32{}, [4]float32{}, p.Theme().Text, false)
 	}
 }
 
@@ -1400,14 +1493,41 @@ func (p *Painter) ImageRegion(b *Bitmap, src, dst Rect, o ImageOptions) {
 		Pixelated: b.pixelated && shrink <= 1})
 }
 
-// FocusRing draws the ring that shows the keyboard focus around r.
+// FocusRing draws the ring that shows the keyboard focus around r, whose
+// corners are rounded by radius, as the theme draws it: FocusRingWidth
+// wide, FocusRingOffset outside r, in Focus.
 func (p *Painter) FocusRing(r Rect, radius [4]float32) {
-	const w = 2
-	o := Rect{r.X - w - 1, r.Y - w - 1, r.W + 2*w + 2, r.H + 2*w + 2}
-	for i := range radius {
-		radius[i] += w + 1
+	t := p.Theme()
+	p.ring(r, radius, t.FocusRingOffset, t.focusRingWidth(), t.Focus)
+}
+
+// focusRingOf draws the focus ring of e around r, a part of e or its box,
+// with the offset and the color e sets (FocusRingOffset, FocusRingColor),
+// else the theme's.
+func (p *Painter) focusRingOf(e *node, r Rect, radius [4]float32) {
+	t := p.Theme()
+	off, color := t.FocusRingOffset, t.Focus
+	if e.ringSet&ringOffsetSet != 0 {
+		off = e.ringOffset
 	}
-	p.fill(o, radius, Color{}, w, p.Theme().Focus)
+	if e.ringSet&ringColorSet != 0 {
+		color = e.ringColor
+	}
+	p.ring(r, radius, off, t.focusRingWidth(), color)
+}
+
+// ring draws a ring w wide whose inner edge is off outside r, inside for a
+// negative off, its corners following radius as CSS's outline does.
+func (p *Painter) ring(r Rect, radius [4]float32, off, w float32, color Color) {
+	d := off + w
+	o := Rect{r.X - d, r.Y - d, r.W + 2*d, r.H + 2*d}
+	if o.W <= 0 || o.H <= 0 {
+		return
+	}
+	for i := range radius {
+		radius[i] = max(0, radius[i]+d)
+	}
+	p.fill(o, radius, Color{}, w, color)
 }
 
 // Clip restricts what fn draws to r.

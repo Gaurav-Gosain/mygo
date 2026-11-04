@@ -15,12 +15,20 @@ ui.Textf(c, "%d files, %s", n, size).TextColor(c.Theme().TextMuted)
 `TextAlign`, `Underline`, `WavyUnderline`, `DottedUnderline` (as links
 mark hover), `Strikethrough`,
 `DecorationColor` and `DecorationThickness` (of the underline and
-strikethrough), `TextBackground` (a highlight behind the lines),
-`LetterSpacing` and `FontFeatures` style it, set on the text or on any
-element above it, whose texts inherit them. `FontFeatures` turns on
+strikethrough), `UnderlineOffset` (how far below the baseline the top of
+the underline is, as CSS's `text-underline-offset`), `TextBackground` (a
+highlight behind the lines), `LetterSpacing` and `FontFeatures` style it,
+set on the text or on any element above it, whose texts inherit them. `FontFeatures` turns on
 OpenType features of the font by tag, or sets them with `tag=value`:
 `FontFeatures("tnum")` gives digits of one width for numbers that change,
 `FontFeatures("liga=0")` turns ligatures off.
+
+A link underlined a little lower than the font puts it, clear of the
+descenders, as `underline-offset-4` does on the web:
+
+```go
+ui.Link(c, "Read the docs", url).Underline().DecorationThickness(1).UnderlineOffset(4)
+```
 
 Text in Arabic, Hebrew and the other scripts written so reads right to
 left, mixed with text reading left to right as Unicode's bidirectional
@@ -33,6 +41,18 @@ directional character, as numbers, read right to left too.
 `SingleLine` keeps text on one line, cut with an ellipsis, `MaxLines`
 limits it to a few, and `Ellipsis(" →")` ends what they cut with another
 mark; `NoWrap` keeps its lines whole, breaking them only at newlines.
+`Balance` wraps text into lines of about the same width, as CSS's
+`text-wrap: balance`: a heading that takes two lines splits near its
+middle instead of leaving one word alone on the second. It keeps the
+number of lines that wrapping at the full width takes, and finds the
+narrowest width that still fits in that many, once when the text is laid
+out. It works on `Text` and `RichText`, and is meant for short text:
+headings, captions, labels on cards.
+
+```go
+ui.Text(c, "Everything you need to ship a desktop app").FontSize(28).Bold().Balance()
+```
+
 `Selectable` lets the user select a text with the pointer, Shift and the
 arrows, and copy it, as an error message or an identifier to paste
 elsewhere.
@@ -79,7 +99,7 @@ replaces that menu, and `Menu.EditItems` puts Copy and Select All in it.
 
 `ui.RichText` mixes styles in one paragraph: each `ui.Span` sets what it
 changes (font, size, weight, italics, color, underlines, strikethrough,
-their color and thickness, a background, letter spacing, features) over
+their color, thickness and offset, a background, letter spacing, features) over
 the style of the text, and the spans wrap together. A `Radius` rounds a
 span's background, which then hugs its glyphs rather than filling the
 line, as code within text shows:

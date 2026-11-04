@@ -67,6 +67,62 @@ func TestTransitionMovesElements(t *testing.T) {
 	}
 }
 
+func TestTransitionMovesElementsInPopovers(t *testing.T) {
+	order := []string{"A", "B", "C"}
+	open := true
+	tt, now := clockTester(func(c *context) {
+		anchor := coreButtonBase(c).Size(40, 20).Label("anchor")
+		corePopoverBase(c, anchor, &open, func(*node) {
+			coreRow(c).Children(func() {
+				for _, s := range order {
+					coreBox(c).Key(s).Size(20, 20).Transition(ElementTransition{Position: true, Duration: time.Second, Ease: Linear}).Children(func() {
+						coreText(c, s)
+					})
+				}
+			})
+		})
+	}, 300, 200)
+	a := at(t, tt, "A").X
+	order = []string{"C", "B", "A"}
+	tt.Frame()
+	*now = now.Add(500 * time.Millisecond)
+	tt.Frame()
+	if x := at(t, tt, "A").X - a; x != 20 {
+		t.Errorf("halfway, A moved %v, not 20", x)
+	}
+	*now = now.Add(time.Second)
+	tt.Frame()
+	if x := at(t, tt, "A").X - a; x != 40 {
+		t.Errorf("once over, A moved %v, not 40", x)
+	}
+}
+
+func TestPopoversFollowMovingAnchors(t *testing.T) {
+	top := float32(0)
+	open := true
+	var anchor *node
+	tt, now := clockTester(func(c *context) {
+		coreColumn(c).Children(func() {
+			coreBox(c).Size(10, top)
+			anchor = coreButtonBase(c).Size(40, 20).Label("anchor").Transition(ElementTransition{Position: true, Duration: time.Second, Ease: Linear})
+			corePopoverBase(c, anchor, &open, func(*node) { coreText(c, "P") })
+		})
+	}, 300, 300)
+	top = 100
+	tt.Frame()
+	for _, d := range []time.Duration{500 * time.Millisecond, time.Second} {
+		*now = now.Add(d)
+		tt.Frame()
+		b := anchor.Bounds()
+		if y := at(t, tt, "P").Y; y != b.Y+b.H {
+			t.Errorf("the panel is at %v, below an anchor at %v", y, b)
+		}
+	}
+	if y := anchor.Bounds().Y; y != 100 {
+		t.Errorf("the anchor ends at %v", y)
+	}
+}
+
 func TestTransitionResizesAndLaysOutContent(t *testing.T) {
 	wide := false
 	tt, now := clockTester(func(c *context) {
@@ -225,6 +281,24 @@ func TestTransitionFadesColors(t *testing.T) {
 	tt.Frame()
 	if p := pixel(); p.R != 255 || p.B != 0 {
 		t.Errorf("once over, the box is %v", p)
+	}
+}
+
+func TestTransitionFadesColorsInOklab(t *testing.T) {
+	bg := RGB(255, 255, 0)
+	tt, now := clockTester(func(c *context) {
+		coreBox(c).Size(50, 50).Background(bg).Transition(ElementTransition{Colors: true,
+			Animation: &Animation{Duration: 200 * time.Millisecond, Ease: Linear, Oklab: true}})
+	}, 100, 100)
+	bg = RGB(0, 0, 255)
+	tt.Frame()
+	*now = now.Add(100 * time.Millisecond)
+	tt.Frame()
+	// Blue, as Oklab mixes them, not sRGB's gray.
+	want := RGB(255, 255, 0).MixOklab(bg, 0.5)
+	d := func(a, b uint8) int { return max(int(a)-int(b), int(b)-int(a)) }
+	if p := tt.Image().RGBAAt(25, 25); d(p.R, want.R) > 1 || d(p.G, want.G) > 1 || d(p.B, want.B) > 1 {
+		t.Errorf("halfway, the box is %v, want %+v", p, want)
 	}
 }
 
@@ -447,5 +521,270 @@ func TestTransitionExitKeepsItsSpans(t *testing.T) {
 	}
 	if sc := ghost.st.spans; sc == nil || len(sc.styles) != len(ghost.spans) {
 		t.Errorf("the copy paints %d spans with the styles of another's", len(ghost.spans))
+	}
+}
+
+func TestTransitionExitTiming(t *testing.T) {
+	shown := true
+	var tr ElementTransition
+	var box *node
+	tt, now := clockTester(func(c *context) {
+		coreColumn(c).Children(func() {
+			coreBox(c).Size(10, 10)
+			if shown {
+				box = coreBox(c).Key("box").Size(50, 50).Transition(tr)
+			}
+		})
+	}, 100, 100)
+	ghost := func() *node {
+		for e := tt.rt.c.root.first.first; e != nil; e = e.next {
+			if e.leaving != 0 {
+				return e
+			}
+		}
+		return nil
+	}
+	near := func(what string, got, want float32) {
+		t.Helper()
+		if d := got - want; d < -0.02 || d > 0.02 {
+			t.Errorf("%s: %v, want %v", what, got, want)
+		}
+	}
+	// enter shows the box again, and returns its opacity after d.
+	enter := func(d time.Duration) float32 {
+		t.Helper()
+		shown = false
+		tt.Frame()
+		*now = now.Add(10 * time.Second)
+		tt.Frame()
+		shown = true
+		tt.Frame()
+		*now = now.Add(d)
+		tt.Frame()
+		if !box.opacitySet {
+			return 1
+		}
+		return box.opacity
+	}
+	// exit removes the box, and returns its copy's opacity after d, -1
+	// without a copy.
+	exit := func(d time.Duration) float32 {
+		t.Helper()
+		*now = now.Add(10 * time.Second)
+		tt.Frame()
+		shown = false
+		tt.Frame()
+		*now = now.Add(d)
+		tt.Frame()
+		g := ghost()
+		o := float32(-1)
+		if g != nil {
+			o = g.opacity
+		}
+		shown = true
+		tt.Frame()
+		*now = now.Add(10 * time.Second)
+		tt.Frame()
+		return o
+	}
+
+	// The Exit goes over its ExitDuration, along its ExitEase, the Enter
+	// over Duration.
+	tr = ElementTransition{Duration: time.Second, Ease: Linear, ExitDuration: 100 * time.Millisecond,
+		Enter: &Motion{}, Exit: &Motion{}}
+	near("entering over a second, after half of it", enter(500*time.Millisecond), 0.5)
+	near("going over 100 ms, after 50", exit(50*time.Millisecond), 0.5)
+	if o := exit(100 * time.Millisecond); o != -1 {
+		t.Errorf("going over 100 ms, after 100 its copy shows at %v", o)
+	}
+	tr.ExitEase = EaseIn
+	near("going along EaseIn, after half of it", exit(50*time.Millisecond), 1-EaseIn(0.5))
+
+	// Without either, it goes as it comes, as before them.
+	tr.ExitDuration, tr.ExitEase = 0, nil
+	near("going over Duration, after half of it", exit(500*time.Millisecond), 0.5)
+
+	// With a spring, ExitDuration makes the exit a curve, along the
+	// spring's Ease, and the Animation's Delay holds it.
+	tr = ElementTransition{Animation: &Animation{Spring: SpringOptions{Duration: time.Second}, Delay: 50 * time.Millisecond},
+		ExitDuration: 100 * time.Millisecond, ExitEase: Linear, Enter: &Motion{}, Exit: &Motion{}}
+	near("going after its delay", exit(100*time.Millisecond), 0.5)
+
+	// A negative ExitDuration goes at once, without a copy, while the
+	// Enter still comes in.
+	tr = ElementTransition{Animation: &Snappy, ExitDuration: -1, Enter: &Motion{}, Exit: &Motion{}}
+	if o := exit(0); o != -1 {
+		t.Errorf("going at once, its copy shows at %v", o)
+	}
+	if o := enter(0); o != 0 {
+		t.Errorf("coming in with a spring, it starts at %v", o)
+	}
+
+	// A negative Duration shows every change at once: the Enter, the Exit
+	// and a move.
+	tr = ElementTransition{Duration: -1, Enter: &Motion{Y: 20}, Exit: &Motion{}}
+	if o := enter(0); o != 1 || box.y != 10 {
+		t.Errorf("coming in at once, it shows at %v, %v opaque", box.y, o)
+	}
+	if o := exit(0); o != -1 {
+		t.Errorf("going at once, its copy shows at %v", o)
+	}
+	if len(tt.rt.trans) > 1 || tt.rt.animating {
+		t.Error("going at once, it keeps animating")
+	}
+}
+
+func TestTransitionFadesShadows(t *testing.T) {
+	var shadows []shadow
+	tr := ElementTransition{Ease: Linear}
+	var box *node
+	tt, now := clockTester(func(c *context) {
+		box = coreBox(c).Size(50, 50).Transition(tr)
+		for _, sh := range shadows {
+			if sh.inset {
+				box.InsetShadow(sh.x, sh.y, sh.blur, sh.spread, sh.color)
+			} else {
+				box.Shadow(sh.x, sh.y, sh.blur, sh.spread, sh.color)
+			}
+		}
+	}, 100, 100)
+	black := RGB(0, 0, 0)
+	shown := func() []shadow {
+		t.Helper()
+		*now = now.Add(100 * time.Millisecond)
+		tt.Frame()
+		return box.shadows
+	}
+	settle := func() {
+		*now = now.Add(time.Second)
+		tt.Frame()
+	}
+
+	// One appearing comes from a transparent one at no offset.
+	shadows = []shadow{{0, 4, 8, 0, black, false}}
+	tt.Frame()
+	if s := shown(); len(s) != 1 || s[0].y != 2 || s[0].blur != 4 || s[0].color.A < 126 || s[0].color.A > 129 || s[0].color.R != 0 {
+		t.Errorf("halfway in, the shadow is %+v", s)
+	}
+	settle()
+	if s := box.shadows; len(s) != 1 || s[0] != shadows[0] {
+		t.Errorf("once in, the shadow is %+v", s)
+	}
+	// One going goes to a transparent one, and the list keeps it while it
+	// goes.
+	shadows = nil
+	tt.Frame()
+	if s := shown(); len(s) != 1 || s[0].y != 2 || s[0].color.A < 126 || s[0].color.A > 129 {
+		t.Errorf("halfway out, the shadow is %+v", s)
+	}
+	settle()
+	if len(box.shadows) != 0 {
+		t.Errorf("once gone, the shadows are %+v", box.shadows)
+	}
+	// It paints as it shows: halfway, 5 DIPs out, at half its alpha.
+	shadows = []shadow{{0, 0, 0, 10, RGB(255, 0, 0), false}}
+	tt.Frame()
+	shown()
+	if p := tt.Image().RGBAAt(52, 25); p.G < 110 || p.G > 145 {
+		t.Errorf("halfway in, the shadow paints %v", p)
+	}
+	settle()
+	if p := tt.Image().RGBAAt(52, 25); p.G != 0 || tt.Image().RGBAAt(57, 25).G != 0 {
+		t.Errorf("once in, the shadow paints %v", p)
+	}
+
+	// An inner shadow where an outer one was changes at once.
+	shadows = []shadow{{0, 0, 0, 10, RGB(255, 0, 0), true}}
+	tt.Frame()
+	if s := shown(); len(s) != 1 || s[0] != shadows[0] {
+		t.Errorf("turned inward, the shadow is %+v", s)
+	}
+	settle()
+
+	// Colors alone leave the shadows changing at once; Shadows alone
+	// animates them.
+	tr = ElementTransition{Colors: true, Ease: Linear}
+	shadows = []shadow{{0, 0, 0, 2, black, true}}
+	tt.Frame()
+	if s := shown(); s[0] != shadows[0] {
+		t.Errorf("with Colors, the shadow is %+v", s)
+	}
+	tr = ElementTransition{Shadows: true, Ease: Linear}
+	tt.Frame()
+	shadows = []shadow{{0, 0, 0, 6, black, true}}
+	tt.Frame()
+	if s := shown(); s[0].spread != 4 {
+		t.Errorf("with Shadows, halfway, the shadow is %+v", s)
+	}
+}
+
+// An Enter and an Exit that Flip mirror their offsets where AttachTo put
+// the element on the other side of its target, from the frame it shows:
+// a menu coming down below its button comes up above it.
+func TestTransitionFlipsWithItsAttachment(t *testing.T) {
+	top := float32(20)
+	open := false
+	tr := ElementTransition{Duration: time.Second, Ease: Linear,
+		Enter: &Motion{Y: -8, Opacity: 1, Flip: true}, Exit: &Motion{Y: -8, Opacity: 1, Flip: true}}
+	var panel *node
+	tt, now := clockTester(func(c *context) {
+		b := coreButtonBase(c).Size(40, 20).Label("anchor").Absolute().Left(20).Top(top)
+		if open {
+			coreOverlay(c, func() {
+				panel = coreBox(c).Size(60, 60).AttachTo(b, AnchorBottom, AnchorTop).Transition(tr)
+			})
+		}
+	}, 200, 200)
+	offset := func() float32 {
+		t.Helper()
+		r := tt.rt.trans[panel.id]
+		if r == nil {
+			t.Fatal("no transition")
+		}
+		return r.shown.y - r.target.y
+	}
+	ghost := func() *node {
+		for e := tt.rt.c.overlay.first; e != nil; e = e.next {
+			if e.leaving != 0 {
+				return e
+			}
+		}
+		return nil
+	}
+	for _, c := range []struct {
+		name string
+		top  float32
+		from float32
+	}{{"below", 20, -8}, {"above", 150, 8}} {
+		top = c.top
+		tt.Frame()
+		open = true
+		tt.Frame()
+		if d := offset(); d != c.from {
+			t.Errorf("%s, it comes from %v", c.name, d)
+		}
+		*now = now.Add(2 * time.Second)
+		tt.Frame()
+		rest := panel.y
+		open = false
+		tt.Frame()
+		*now = now.Add(500 * time.Millisecond)
+		tt.Frame()
+		g := ghost()
+		if g == nil {
+			t.Fatalf("%s, no copy going", c.name)
+		}
+		if d := g.y - rest; d != c.from/2 {
+			t.Errorf("%s, halfway out, it is %v from its place", c.name, d)
+		}
+		*now = now.Add(2 * time.Second)
+		tt.Frame()
+	}
+	// Without Flip, it comes from where its Enter says.
+	tr.Enter.Flip = false
+	open = true
+	tt.Frame()
+	if d := offset(); d != -8 {
+		t.Errorf("above without Flip, it comes from %v", d)
 	}
 }

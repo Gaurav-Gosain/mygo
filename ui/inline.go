@@ -93,6 +93,7 @@ func (e *node) spanStyle() Span {
 		s.Underline = t.underline && !t.wavy && !t.dotted
 		s.WavyUnderline = t.underline && t.wavy
 		s.DottedUnderline = t.underline && t.dotted
+		s.solid = t.underline && t.solid
 	}
 	if t.set&setStrike != 0 {
 		s.Strikethrough = t.strike
@@ -112,6 +113,9 @@ func (e *node) spanStyle() Span {
 	if t.set&setDecoThick != 0 {
 		s.DecorationThickness = t.decoThick
 	}
+	if t.set&setDecoOffset != 0 {
+		s.UnderlineOffset, s.offsetSet = t.decoOffset, true
+	}
 	switch {
 	case t.set&setBackground != 0:
 		s.Background = t.background
@@ -121,7 +125,7 @@ func (e *node) spanStyle() Span {
 	}
 	// What dims the element dims its text.
 	alpha := float32(1)
-	if e.flags&flagDisabled != 0 {
+	if e.flags&flagDisabled != 0 && !e.undimmed {
 		alpha = 0.5
 	}
 	if e.opacitySet {
@@ -153,6 +157,9 @@ func over(s, base Span) Span {
 	if s.DecorationThickness == 0 {
 		s.DecorationThickness = base.DecorationThickness
 	}
+	if _, ok := s.underlineOffset(); !ok {
+		s.UnderlineOffset, s.offsetSet = base.UnderlineOffset, base.offsetSet
+	}
 	if s.Background.A == 0 {
 		s.Background = base.Background
 	}
@@ -169,6 +176,7 @@ func over(s, base Span) Span {
 	s.Underline = s.Underline || base.Underline
 	s.WavyUnderline = s.WavyUnderline || base.WavyUnderline
 	s.DottedUnderline = s.DottedUnderline || base.DottedUnderline
+	s.solid = s.solid || base.solid
 	s.Strikethrough = s.Strikethrough || base.Strikethrough
 	return s
 }
@@ -211,7 +219,7 @@ func union(a, b Rect) Rect {
 func (p *Painter) paintInline(e *node) {
 	if e.ringShown() {
 		for _, r := range e.frags {
-			p.FocusRing(r, [4]float32{2, 2, 2, 2})
+			p.focusRingOf(e, r, [4]float32{2, 2, 2, 2})
 		}
 	}
 	for ch := e.first; ch != nil; ch = ch.next {
@@ -225,6 +233,9 @@ func (p *Painter) paintInline(e *node) {
 // keyboard and MyGo rings it.
 func (e *node) ringShown() bool {
 	rt := e.c.rt
+	if e.flags&(flagFocusable|flagOwnRing) == flagFocusable && rt.insp.isForced(e.id, forceFocusVisible) {
+		return true
+	}
 	return e.flags&(flagFocusable|flagOwnRing) == flagFocusable && rt.focused == e.id && rt.focusVisible && rt.windowFocus()
 }
 

@@ -14,6 +14,19 @@ import (
 // the main screen's, which then does not show.
 var ErrFullScreen = errors.New("terminal: a full-screen program's screen shows")
 
+// HistoryRows returns how many rows the scrollback holds above the main
+// screen, or 0 while a full-screen program's screen shows. A client of a
+// server that numbers the rows of a session's history finds from it which
+// rows it still holds, after the scrollback's limit let go of the oldest.
+func (t *Terminal) HistoryRows() int {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if t.term == nil || t.term.AltScreen() {
+		return 0
+	}
+	return t.term.ScrollbackRows()
+}
+
 // PrependHistory adds rows above the oldest row of the scrollback, as a
 // client of a server that keeps a session's terminal does when the view
 // nears the top of the history it was sent and it fetches what came

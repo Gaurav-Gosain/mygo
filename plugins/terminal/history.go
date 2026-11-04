@@ -69,9 +69,10 @@ func (t *Terminal) PrependHistory(rows []byte) (int, error) {
 	// its limit allows: the new emulator's limit grows by what they take,
 	// or it would let go of them at once.
 	t.prepended += prependCost(rows, s.size.cols)
+	limit := t.scrollbackLimit()
 	t.mu.Unlock()
 
-	quiet := &quietVT{on: true, size: s.size, dark: s.dark}
+	quiet := &quietVT{on: true, size: s.size, dark: s.dark, scrollback: limit}
 	term, err := t.newVT(s.size.cols, s.size.rows, quiet)
 	if err == nil {
 		s.build(term, rows)

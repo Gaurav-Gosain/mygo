@@ -688,6 +688,9 @@ type quietVT struct {
 	on   bool
 	size gridSize
 	dark bool
+	// scrollback is the scrollback limit the emulator takes, read under
+	// t.mu as the build began.
+	scrollback int
 }
 
 // newVT makes an emulator with the terminal's settings and effects, of cols
@@ -773,13 +776,10 @@ func (t *Terminal) newVT(cols, rows int, quiet *quietVT) (*vt.Terminal, error) {
 	// Grapheme clusters take the cells of their width, as in Ghostty:
 	// emoji with modifiers and joined emoji take two.
 	term.SetModeDefault(vt.ModeGraphemes, true)
-	switch {
-	case opts.Scrollback < 0:
-		term.SetScrollback(0)
-	case opts.Scrollback > 0:
-		term.SetScrollback(opts.Scrollback + t.prepended)
-	default:
-		term.SetScrollback(10<<20 + t.prepended)
+	if quiet != nil {
+		term.SetScrollback(quiet.scrollback)
+	} else {
+		term.SetScrollback(t.scrollbackLimit())
 	}
 	term.SetDefaultCursor(vtCursor(opts.Cursor), !opts.NoBlink)
 	if runtime.GOOS == "windows" && opts.Conn == nil {
@@ -1064,6 +1064,31 @@ func (t *Terminal) SetScrollMultiplier(m ScrollMultiplier) {
 	t.mu.Lock()
 	t.opts.ScrollMultiplier = m
 	t.mu.Unlock()
+}
+
+// scrollbackLimit is the scrollback limit of the terminal's emulators:
+// Options.Scrollback, and what the rows PrependHistory added take on top.
+func (t *Terminal) scrollbackLimit() int {
+	switch {
+	case t.opts.Scrollback < 0:
+		return 0
+	case t.opts.Scrollback > 0:
+		return t.opts.Scrollback + t.prepended
+	}
+	return 10<<20 + t.prepended
+}
+
+// SetScrollback changes Options.Scrollback, how many bytes of output the
+// scrollback keeps above the screen. A smaller limit lets go of the oldest
+// rows as output comes. A client of a server that keeps a session's
+// history, and fetches it with PrependHistory, needs little of its own.
+func (t *Terminal) SetScrollback(n int) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.opts.Scrollback = n
+	if t.term != nil {
+		t.term.SetScrollback(t.scrollbackLimit())
+	}
 }
 
 // SetMinimumContrast changes the least contrast of text with its

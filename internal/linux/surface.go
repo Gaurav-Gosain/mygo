@@ -854,6 +854,7 @@ func initSurfaceCallbacks() {
 		}
 		s.rendering, s.rendered, s.inMemory = true, true, false
 		s.send(platform.SurfaceEvent{Kind: platform.SurfaceFrame})
+		s.paceFrameClock()
 		s.rendering = false
 		if s.renderAgain {
 			s.renderAgain = false

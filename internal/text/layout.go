@@ -373,6 +373,11 @@ type System struct {
 	lang string
 	// fonts caches the font of each style.
 	fonts map[Style]*Font
+	// alone caches the glyphs of characters alone, by style, made in
+	// generation aloneGen (AppendAlone).
+	alone     map[Style]*aloneTable
+	aloneLast *aloneTable
+	aloneGen  uint64
 
 	// Layouts are kept by recency within a memory budget, not by how
 	// many frames a scrolling window has drawn.

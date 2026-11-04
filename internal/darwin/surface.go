@@ -583,14 +583,16 @@ var cursorSelectors = map[platform.Cursor]string{
 	platform.CursorAlias:        "dragLinkCursor",
 	platform.CursorContextMenu:  "contextualMenuCursor",
 	platform.CursorNoDrop:       "operationNotAllowedCursor",
+	// AppKit's _moveCursor raises an exception on macOS 27, though NSCursor
+	// implements it: the open hand is the nearest of AppKit's.
+	platform.CursorAllScroll: "openHandCursor",
 	// AppKit's own, which it keeps private, as WebKit uses them.
-	platform.CursorProgress:  "busyButClickableCursor",
-	platform.CursorWait:      "_waitCursor",
-	platform.CursorHelp:      "_helpCursor",
-	platform.CursorZoomIn:    "_zoomInCursor",
-	platform.CursorZoomOut:   "_zoomOutCursor",
-	platform.CursorAllScroll: "_moveCursor",
-	platform.CursorCell:      "_cellCursor",
+	platform.CursorProgress: "busyButClickableCursor",
+	platform.CursorWait:     "_waitCursor",
+	platform.CursorHelp:     "_helpCursor",
+	platform.CursorZoomIn:   "_zoomInCursor",
+	platform.CursorZoomOut:  "_zoomOutCursor",
+	platform.CursorCell:     "_cellCursor",
 }
 
 // cursorFallbacks are the cursors of older macOS for those it lacks, and
@@ -599,7 +601,6 @@ var cursorFallbacks = map[platform.Cursor]string{
 	platform.CursorResizeColumn: "resizeLeftRightCursor",
 	platform.CursorResizeRow:    "resizeUpDownCursor",
 	platform.CursorWait:         "busyButClickableCursor",
-	platform.CursorAllScroll:    "openHandCursor",
 	platform.CursorCell:         "crosshairCursor",
 }
 
@@ -654,9 +655,9 @@ func nsCursor(c platform.Cursor) id {
 
 // hasCursor reports whether NSCursor has the class method name. AppKit's
 // private cursors (named with a leading underscore) must be among the
-// methods NSCursor itself implements: NSCursor answers
-// respondsToSelector: for some it no longer has, as _moveCursor, and
-// sending one of those raises an exception that ends the app.
+// methods NSCursor itself implements, which macOS 27 lacks _waitCursor
+// and _cellCursor of: sending a selector it lacks raises an exception
+// that ends the app.
 func hasCursor(cls id, name string) bool {
 	if !strings.HasPrefix(name, "_") {
 		return respondsTo(cls, name)

@@ -71,24 +71,34 @@ func (s *System) Alone(text []rune, style Style, glyph func(Glyph)) bool {
 	return true
 }
 
+// aloneCache holds the glyphs of characters alone, by style, made in
+// generation gen.
+type aloneCache struct {
+	tables map[Style]*aloneTable
+	last   *aloneTable
+	gen    uint64
+}
+
 // aloneTable returns the table of the glyphs of characters alone in style.
 func (s *System) aloneTable(style Style) *aloneTable {
-	if s.aloneGen != s.gen || s.alone == nil {
-		s.alone, s.aloneGen, s.aloneLast = map[Style]*aloneTable{}, s.gen, nil
+	c, _ := s.alone.(*aloneCache)
+	if c == nil || c.gen != s.gen {
+		c = &aloneCache{tables: map[Style]*aloneTable{}, gen: s.gen}
+		s.alone = c
 	}
 	key := Style{Family: style.Family, Size: style.FontSize(), Weight: style.weight(), Italic: style.Italic, Features: style.Features, Lang: style.Lang}
-	if s.aloneLast != nil && s.aloneLast.key == key {
-		return s.aloneLast
+	if c.last != nil && c.last.key == key {
+		return c.last
 	}
-	t := s.alone[key]
+	t := c.tables[key]
 	if t == nil {
-		if len(s.alone) >= 64 {
-			clear(s.alone)
+		if len(c.tables) >= 64 {
+			clear(c.tables)
 		}
 		t = &aloneTable{key: key}
-		s.alone[key] = t
+		c.tables[key] = t
 	}
-	s.aloneLast = t
+	c.last = t
 	return t
 }
 

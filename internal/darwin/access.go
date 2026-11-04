@@ -39,6 +39,10 @@ type accessElement struct {
 	// its rows, built or not.
 	chosen []uint64
 	count  int
+	// chosenCells are the cells of a table that are chosen, and linked
+	// the elements the element controls (AXLinkedUIElements).
+	chosenCells []uint64
+	linked      []id
 }
 
 var (
@@ -157,9 +161,22 @@ func markChar(n platform.AccessNode) string {
 }
 
 // chooses reports whether a node is the row of a list, a table or an
-// outline that its list chooses.
+// outline that its list chooses, or a cell of a table chosen or not, as
+// ARIA's gridcells with aria-selected.
 func chooses(n platform.AccessNode) bool {
-	return (n.Role == platform.RoleListItem || n.Role == platform.RoleRow || n.Role == platform.RoleTreeItem) && n.States&platform.AccessSelectable != 0
+	return (n.Role == platform.RoleListItem || n.Role == platform.RoleRow || n.Role == platform.RoleTreeItem || cell(n.Role)) && n.States&platform.AccessSelectable != 0
+}
+
+// showsMenu reports whether a node opens a popup as it is pressed, which
+// AXShowMenu does, as WebKit's elements with aria-haspopup.
+func showsMenu(n platform.AccessNode) bool {
+	return n.HasPopup != platform.PopupNone && n.Actions&platform.ActionPress != 0
+}
+
+// cell reports whether nodes of a role are cells of a table, headers
+// included.
+func cell(r platform.AccessRole) bool {
+	return r == platform.RoleCell || r == platform.RoleColumnHeader || r == platform.RoleRowHeader
 }
 
 func roleOf(n platform.AccessNode) (role, subrole string) {
@@ -314,8 +331,8 @@ func (el *accessElement) apply(n platform.AccessNode, fresh bool) (valueChanged 
 		}
 		send(obj, "setAccessibilityPlaceholderValue:", uintptr(p))
 	}
-	if sorted := platform.AccessSortAscending | platform.AccessSortDescending; n.Role == platform.RoleColumnHeader && (fresh || n.States&sorted != o.States&sorted) {
-		// NSAccessibilitySortDirection.
+	if sorted := platform.AccessSortAscending | platform.AccessSortDescending | platform.AccessSortOther; (n.Role == platform.RoleColumnHeader || n.Role == platform.RoleRowHeader) && (fresh || n.States&sorted != o.States&sorted) {
+		// NSAccessibilitySortDirection, Unknown for another order.
 		dir := 0
 		switch {
 		case n.States&platform.AccessSortAscending != 0:
@@ -432,7 +449,7 @@ func (s *surface) UpdateAccessibility(tree *platform.AccessTree) {
 		// Lists and tables: their rows, those that show, those chosen, and
 		// how many they have, built or not. A list's own rows say where
 		// they are among all; the rows of other tables, where among those.
-		var selectionChanged []*accessElement
+		var selectionChanged, cellsChanged []*accessElement
 		for i, n := range tree.Nodes {
 			if n.Role != platform.RoleList && n.Role != platform.RoleTable && n.Role != platform.RoleTree {
 				continue
@@ -474,6 +491,23 @@ func (s *surface) UpdateAccessibility(tree *platform.AccessTree) {
 					selectionChanged = append(selectionChanged, el)
 				}
 			}
+			// The cells chosen, as a grid's selected gridcells, in its rows.
+			var cells []id
+			var cellIDs []uint64
+			for _, rid := range children[i] {
+				for _, cid := range s.elements[rid].children {
+					if c := s.elements[cid]; cell(c.node.Role) && chooses(c.node) && c.node.States&platform.AccessChecked != 0 {
+						cells, cellIDs = append(cells, c.obj), append(cellIDs, cid)
+					}
+				}
+			}
+			if !slices.Equal(el.chosenCells, cellIDs) {
+				el.chosenCells = cellIDs
+				send(el.obj, "setAccessibilitySelectedCells:", uintptr(nsArray(cells...)))
+				if !fresh[n.ID] {
+					cellsChanged = append(cellsChanged, el)
+				}
+			}
 		}
 		release(s.topLevel)
 		s.topLevel = retain(nsArray(top...))
@@ -490,6 +524,23 @@ func (s *surface) UpdateAccessibility(tree *platform.AccessTree) {
 				changed = true
 			}
 		}
+		// What the elements control (aria-controls), among those left.
+		for _, n := range tree.Nodes {
+			el := s.elements[n.ID]
+			if len(n.Controls) == 0 && el.linked == nil {
+				continue
+			}
+			var linked []id
+			for _, cid := range n.Controls {
+				if c := s.elements[cid]; c != nil {
+					linked = append(linked, c.obj)
+				}
+			}
+			if !slices.Equal(el.linked, linked) {
+				el.linked = linked
+				send(el.obj, "setAccessibilityLinkedUIElements:", uintptr(nsArray(linked...)))
+			}
+		}
 		if changed {
 			postNote(s.view, "AXLayoutChanged")
 		}
@@ -498,6 +549,9 @@ func (s *surface) UpdateAccessibility(tree *platform.AccessTree) {
 		}
 		for _, el := range selectionChanged {
 			postNote(el.obj, "AXSelectedRowsChanged")
+		}
+		for _, el := range cellsChanged {
+			postNote(el.obj, "AXSelectedCellsChanged")
 		}
 		for _, obj := range busyChanged {
 			postNote(obj, "AXElementBusyChanged")
@@ -602,6 +656,14 @@ func registerAccessClass() {
 			}
 			return NSRect{}
 		}),
+		// What the app calls the element's role, as WebKit says
+		// aria-roledescription, else AppKit's name of it.
+		method("accessibilityRoleDescription", func(self id, cmd objc.SEL) id {
+			if el := b().accessElementOf(self); el != nil && el.node.RoleDescription != "" {
+				return nsString(el.node.RoleDescription)
+			}
+			return sendSuper(self, "MyGoAccessibilityElement", cmd)
+		}),
 		method("isAccessibilityFocused", func(self id, _ objc.SEL) bool {
 			el := b().accessElementOf(self)
 			return el != nil && el.s.access.Focus == el.node.ID
@@ -623,6 +685,11 @@ func registerAccessClass() {
 			}
 			if menuItem(el.node.Role) {
 				names = send(names, "arrayByAddingObject:", uintptr(nsString("AXMenuItemMarkChar")))
+			}
+			// The kind of popup the element opens, as WebKit's say
+			// aria-haspopup.
+			if el.node.HasPopup != platform.PopupNone {
+				names = send(names, "arrayByAddingObject:", uintptr(nsString("AXPopupValue")))
 			}
 			names = send(names, "arrayByAddingObject:", uintptr(nsString("AXElementBusy")))
 			if el.node.Current != platform.CurrentNone {
@@ -650,6 +717,10 @@ func registerAccessClass() {
 					}
 					if menuItem(el.node.Role) {
 						return 0
+					}
+				case "AXPopupValue":
+					if p := el.node.HasPopup; p != platform.PopupNone {
+						return nsString(p.String())
 					}
 				case "AXElementBusy":
 					return nsBool(el.node.States&platform.AccessBusy != 0)
@@ -696,6 +767,9 @@ func registerAccessClass() {
 		}),
 		method("isAccessibilitySelectorAllowed:", func(self id, cmd objc.SEL, selector objc.SEL) bool {
 			if el := b().accessElementOf(self); el != nil {
+				if selector == sel("accessibilityPerformShowMenu") {
+					return showsMenu(el.node)
+				}
 				for name, action := range allowed {
 					if sel(name) == selector {
 						return el.node.Actions&action != 0
@@ -715,6 +789,9 @@ func registerAccessClass() {
 						names = append(names, nsString(a.name))
 					}
 				}
+				if showsMenu(el.node) {
+					names = append(names, nsString("AXShowMenu"))
+				}
 			}
 			return nsArray(names...)
 		}),
@@ -733,10 +810,19 @@ func registerAccessClass() {
 					el.act(a.kind, "")
 				}
 			}
+			if name == "AXShowMenu" && showsMenu(el.node) {
+				el.act(platform.AccessPress, "")
+			}
 		}),
 		method("accessibilityPerformPress", func(self id, _ objc.SEL) bool {
 			el := b().accessElementOf(self)
 			return el != nil && el.act(platform.AccessPress, "")
+		}),
+		// Opening the popup of an element having one (aria-haspopup),
+		// which pressing it does.
+		method("accessibilityPerformShowMenu", func(self id, _ objc.SEL) bool {
+			el := b().accessElementOf(self)
+			return el != nil && showsMenu(el.node) && el.act(platform.AccessPress, "")
 		}),
 		method("accessibilityPerformIncrement", func(self id, _ objc.SEL) bool {
 			el := b().accessElementOf(self)

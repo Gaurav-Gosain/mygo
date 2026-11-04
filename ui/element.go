@@ -4,10 +4,10 @@ import (
 	"math"
 	"strings"
 
-	"github.com/egoist/mygo/internal/platform"
-	"github.com/egoist/mygo/internal/scene"
-	"github.com/egoist/mygo/internal/text"
-	transfer "github.com/egoist/mygo/transfer"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/text"
+	transfer "github.com/Gaurav-Gosain/mygo/transfer"
 )
 
 // Align positions children along an axis: Justify places them along the

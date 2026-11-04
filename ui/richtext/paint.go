@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 // paint lays out the paragraphs in view of the box r, and paints them:

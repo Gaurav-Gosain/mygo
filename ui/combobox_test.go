@@ -5,7 +5,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/egoist/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
 )
 
 var fonts = []string{"Arial", "Helvetica", "Times", "Courier", "Optima"}

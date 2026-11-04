@@ -9,7 +9,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/egoist/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
 )
 
 func (b *Backend) NowPlaying() platform.NowPlaying { return nowPlaying{b} }

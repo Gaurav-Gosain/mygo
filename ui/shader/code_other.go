@@ -3,9 +3,9 @@
 package shader
 
 import (
-	"github.com/egoist/mygo/internal/scene"
-	"github.com/egoist/mygo/internal/shaderir"
-	"github.com/egoist/mygo/internal/shaderir/glsl"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/shaderir"
+	"github.com/Gaurav-Gosain/mygo/internal/shaderir/glsl"
 )
 
 // code gives fx p's code for the OpenGL and WebGL 2 renderer, as an

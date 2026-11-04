@@ -9,7 +9,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/egoist/mygo/transfer"
+	"github.com/Gaurav-Gosain/mygo/transfer"
 )
 
 func TestClipboardDIBRejectsInvalidGeometry(t *testing.T) {

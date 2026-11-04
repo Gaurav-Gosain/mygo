@@ -9,7 +9,7 @@ import (
 	"reflect"
 	"slices"
 
-	"github.com/egoist/mygo/internal/tsgen"
+	"github.com/Gaurav-Gosain/mygo/internal/tsgen"
 )
 
 // GenerateTypeScript renders the typed TypeScript client for all services

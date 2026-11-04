@@ -16,10 +16,10 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/egoist/mygo"
-	"github.com/egoist/mygo/internal/wait"
-	_ "github.com/egoist/mygo/plugins/automation"
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo"
+	"github.com/Gaurav-Gosain/mygo/internal/wait"
+	_ "github.com/Gaurav-Gosain/mygo/plugins/automation"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 // automationApp is the app TestAutomation drives from another process: a

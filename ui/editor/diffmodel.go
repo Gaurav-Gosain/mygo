@@ -5,8 +5,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/egoist/mygo/internal/diff"
-	"github.com/egoist/mygo/internal/rope"
+	"github.com/Gaurav-Gosain/mygo/internal/diff"
+	"github.com/Gaurav-Gosain/mygo/internal/rope"
 )
 
 // diffModel keeps the hunks between the lines of two buffers, old and

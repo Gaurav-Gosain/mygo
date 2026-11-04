@@ -40,9 +40,9 @@ JavaScript package whose functions call them. The app uses the Go half with
 
 ```go
 import (
-	"github.com/egoist/mygo"
-	"github.com/egoist/mygo/plugins/fetch"
-	"github.com/egoist/mygo/plugins/websocket"
+	"github.com/Gaurav-Gosain/mygo"
+	"github.com/Gaurav-Gosain/mygo/plugins/fetch"
+	"github.com/Gaurav-Gosain/mygo/plugins/websocket"
 )
 
 func main() {

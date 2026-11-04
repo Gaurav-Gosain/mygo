@@ -8,8 +8,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/egoist/mygo/internal/scene"
-	"github.com/egoist/mygo/internal/text"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/text"
 )
 
 // writePNG saves an image for inspection when MYGO_RASTER_PNG names a

@@ -8,8 +8,8 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/egoist/mygo"
-	"github.com/egoist/mygo/internal/wait"
+	"github.com/Gaurav-Gosain/mygo"
+	"github.com/Gaurav-Gosain/mygo/internal/wait"
 )
 
 // capturePage captures with getUserMedia() at app://localhost/capture, a

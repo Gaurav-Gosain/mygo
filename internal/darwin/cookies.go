@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
 	"github.com/ebitengine/purego/objc"
-	"github.com/egoist/mygo/internal/platform"
 )
 
 // cookieStore returns the WKHTTPCookieStore of store, nil for the

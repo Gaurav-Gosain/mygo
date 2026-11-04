@@ -8,7 +8,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/egoist/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
 )
 
 // FileWatch records the targets the core enrolls; tests report changes

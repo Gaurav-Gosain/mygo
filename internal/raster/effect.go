@@ -4,7 +4,7 @@ import (
 	"math"
 	"runtime"
 
-	"github.com/egoist/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
 )
 
 // drawer is what draw keeps from scene to scene: the renderers of the

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/egoist/mygo/internal/i18ngen"
+	"github.com/Gaurav-Gosain/mygo/internal/i18ngen"
 )
 
 func TestI18nConfig(t *testing.T) {
@@ -153,7 +153,7 @@ func TestI18nApp(t *testing.T) {
 	checkout, _ := filepath.Abs(filepath.Join("..", ".."))
 	sum, _ := os.ReadFile(filepath.Join(checkout, "go.sum"))
 	writeFiles(t, dir, map[string]string{
-		"go.mod":          "module demo-app\n\ngo " + goVersion() + "\n\nrequire github.com/egoist/mygo v0.0.0\n\nreplace github.com/egoist/mygo => " + checkout + "\n",
+		"go.mod":          "module demo-app\n\ngo " + goVersion() + "\n\nrequire github.com/Gaurav-Gosain/mygo v0.0.0\n\nreplace github.com/Gaurav-Gosain/mygo => " + checkout + "\n",
 		"go.sum":          string(sum),
 		jsonConfig:        `{"i18n": {}}`,
 		"locales/en.json": `{"files": "{n, plural, one {# file} other {# files}}"}`,
@@ -164,7 +164,7 @@ import (
 	"fmt"
 
 	"demo-app/locales"
-	"github.com/egoist/mygo/i18n"
+	"github.com/Gaurav-Gosain/mygo/i18n"
 )
 
 func main() {

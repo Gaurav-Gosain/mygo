@@ -3,9 +3,9 @@
 package ui
 
 import (
-	i18n "github.com/egoist/mygo/i18n"
-	platform "github.com/egoist/mygo/internal/platform"
-	transfer "github.com/egoist/mygo/transfer"
+	i18n "github.com/Gaurav-Gosain/mygo/i18n"
+	platform "github.com/Gaurav-Gosain/mygo/internal/platform"
+	transfer "github.com/Gaurav-Gosain/mygo/transfer"
 	image "image"
 	time "time"
 )

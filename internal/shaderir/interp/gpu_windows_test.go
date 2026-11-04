@@ -4,11 +4,11 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/egoist/mygo/internal/gpu/d3d11"
-	"github.com/egoist/mygo/internal/gpu/gputest"
-	"github.com/egoist/mygo/internal/scene"
-	"github.com/egoist/mygo/internal/shaderir/hlsl"
-	"github.com/egoist/mygo/internal/shaderir/interp"
+	"github.com/Gaurav-Gosain/mygo/internal/gpu/d3d11"
+	"github.com/Gaurav-Gosain/mygo/internal/gpu/gputest"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/shaderir/hlsl"
+	"github.com/Gaurav-Gosain/mygo/internal/shaderir/interp"
 )
 
 // TestDirect3D draws a shader with Direct3D 11, its HLSL function wrapped

@@ -3,8 +3,8 @@
 package mygo
 
 import (
-	"github.com/egoist/mygo/internal/platform"
-	win "github.com/egoist/mygo/internal/windows"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
+	win "github.com/Gaurav-Gosain/mygo/internal/windows"
 )
 
 func newBackend() platform.Backend { return win.New() }

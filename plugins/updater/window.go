@@ -11,9 +11,9 @@ import (
 	"html"
 	"strings"
 
-	"github.com/egoist/mygo"
-	"github.com/egoist/mygo/plugins/updater/internal/frontend"
-	"github.com/egoist/mygo/plugins/updater/internal/markdown"
+	"github.com/Gaurav-Gosain/mygo"
+	"github.com/Gaurav-Gosain/mygo/plugins/updater/internal/frontend"
+	"github.com/Gaurav-Gosain/mygo/plugins/updater/internal/markdown"
 )
 
 //go:embed page.html

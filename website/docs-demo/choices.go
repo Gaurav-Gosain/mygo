@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 func init() {

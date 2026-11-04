@@ -50,11 +50,11 @@ import (
 	"regexp"
 	"sync"
 
-	"github.com/egoist/mygo/internal/scene"
-	"github.com/egoist/mygo/internal/shader"
-	"github.com/egoist/mygo/internal/shaderir"
-	"github.com/egoist/mygo/internal/shaderir/interp"
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/shader"
+	"github.com/Gaurav-Gosain/mygo/internal/shaderir"
+	"github.com/Gaurav-Gosain/mygo/internal/shaderir/interp"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 // Shader is a compiled shader, which draws in any window, from any

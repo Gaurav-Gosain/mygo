@@ -6,7 +6,7 @@ dots, bars and blocks that MyGo draws itself, as loading.dev's look and
 move.
 
 ```go
-import "github.com/egoist/mygo/plugins/loading"
+import "github.com/Gaurav-Gosain/mygo/plugins/loading"
 
 loading.Arc(c).Label("Saving")
 loading.Ring(c, loading.Options{Size: 32, Color: t.Accent, Easing: loading.EaseInOut})

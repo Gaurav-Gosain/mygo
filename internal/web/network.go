@@ -5,7 +5,7 @@ package web
 import (
 	"syscall/js"
 
-	"github.com/egoist/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
 )
 
 func (b *Backend) Network() platform.Network { return network{b} }

@@ -5,7 +5,7 @@ import (
 	"slices"
 	"sync"
 
-	"github.com/egoist/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
 )
 
 // JumpList controls the app's jump list on Windows, the menu of its

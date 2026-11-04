@@ -27,7 +27,7 @@ import (
 	"embed"
 	"io/fs"
 
-	"github.com/egoist/mygo"
+	"github.com/Gaurav-Gosain/mygo"
 )
 
 //go:embed all:` + frontendGenDir + `

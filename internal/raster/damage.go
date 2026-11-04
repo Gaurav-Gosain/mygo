@@ -4,7 +4,7 @@ import (
 	"image"
 	"runtime"
 
-	"github.com/egoist/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
 )
 
 // Renderer draws the successive scenes of a window into Image, redrawing

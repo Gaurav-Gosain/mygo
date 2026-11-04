@@ -10,7 +10,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/egoist/mygo"
+	"github.com/Gaurav-Gosain/mygo"
 )
 
 // TestFileIcon draws the icons of an application, a folder and a file at

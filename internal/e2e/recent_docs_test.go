@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/egoist/mygo"
+	"github.com/Gaurav-Gosain/mygo"
 )
 
 // TestRecentDocuments records a document the user opened and clears it

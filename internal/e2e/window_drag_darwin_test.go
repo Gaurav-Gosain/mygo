@@ -7,10 +7,10 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/egoist/mygo"
-	"github.com/egoist/mygo/internal/darwin"
-	"github.com/egoist/mygo/internal/wait"
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo"
+	"github.com/Gaurav-Gosain/mygo/internal/darwin"
+	"github.com/Gaurav-Gosain/mygo/internal/wait"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 // TestDragRegionMovesWindow presses a drag region and drags it, of a page

@@ -30,8 +30,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/egoist/mygo"
-	"github.com/egoist/mygo/netproxy"
+	"github.com/Gaurav-Gosain/mygo"
+	"github.com/Gaurav-Gosain/mygo/netproxy"
 )
 
 // Options configure the plugin.

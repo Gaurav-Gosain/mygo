@@ -4,9 +4,9 @@ import (
 	"math"
 	"testing"
 
-	"github.com/egoist/mygo/internal/shader"
-	"github.com/egoist/mygo/internal/shaderir"
-	"github.com/egoist/mygo/internal/shaderir/interp"
+	"github.com/Gaurav-Gosain/mygo/internal/shader"
+	"github.com/Gaurav-Gosain/mygo/internal/shaderir"
+	"github.com/Gaurav-Gosain/mygo/internal/shaderir/interp"
 )
 
 func compile(t *testing.T, src string) (*shaderir.Program, *interp.Program) {

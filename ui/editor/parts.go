@@ -3,8 +3,8 @@ package editor
 import (
 	"unicode/utf8"
 
-	"github.com/egoist/mygo/internal/l10n"
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/internal/l10n"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 // The parts of an editor around its text: its find bar, its go to line

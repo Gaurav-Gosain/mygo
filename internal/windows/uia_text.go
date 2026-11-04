@@ -12,7 +12,7 @@ import (
 	"unicode/utf16"
 	"unsafe"
 
-	"github.com/egoist/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
 )
 
 // The text of a text field is UI Automation's Text pattern: the field is

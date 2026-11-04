@@ -10,11 +10,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/egoist/mygo"
-	"github.com/egoist/mygo/internal/linux"
-	"github.com/egoist/mygo/internal/wait"
-	"github.com/egoist/mygo/transfer"
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo"
+	"github.com/Gaurav-Gosain/mygo/internal/linux"
+	"github.com/Gaurav-Gosain/mygo/internal/wait"
+	"github.com/Gaurav-Gosain/mygo/transfer"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 func gtkPressSource(t *testing.T, w *mygo.Window) {

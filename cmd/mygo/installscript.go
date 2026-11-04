@@ -7,7 +7,7 @@ import (
 	"text/template"
 	"unicode"
 
-	"github.com/egoist/mygo/internal/update"
+	"github.com/Gaurav-Gosain/mygo/internal/update"
 )
 
 // The install script, install.sh, installs the app for the user, without

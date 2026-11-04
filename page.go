@@ -3,7 +3,7 @@ package mygo
 import (
 	"image/color"
 
-	"github.com/egoist/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
 )
 
 // Page is the web page a window shows: what it loads, the scripts it runs,

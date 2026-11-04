@@ -8,9 +8,9 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/transfer"
 	"github.com/ebitengine/purego/objc"
-	"github.com/egoist/mygo/internal/platform"
-	"github.com/egoist/mygo/transfer"
 )
 
 var (

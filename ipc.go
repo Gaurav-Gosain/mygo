@@ -18,7 +18,7 @@ import (
 	"sync"
 	"unsafe"
 
-	"github.com/egoist/mygo/internal/tsgen"
+	"github.com/Gaurav-Gosain/mygo/internal/tsgen"
 )
 
 // jsonOptions are used for every value crossing the IPC boundary.

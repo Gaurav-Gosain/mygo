@@ -8,7 +8,7 @@ import (
 	"log"
 	"runtime"
 
-	"github.com/egoist/mygo"
+	"github.com/Gaurav-Gosain/mygo"
 )
 
 // Greeter is callable from the page. In a real project `mygo generate`

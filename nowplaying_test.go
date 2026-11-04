@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/egoist/mygo/audio"
-	"github.com/egoist/mygo/internal/platform"
-	"github.com/egoist/mygo/internal/wait"
+	"github.com/Gaurav-Gosain/mygo/audio"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/wait"
 )
 
 // shownNowPlaying waits for the backend to have been told n times and

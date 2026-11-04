@@ -3,8 +3,8 @@ package native
 import (
 	"math"
 
-	"github.com/egoist/mygo/plugins/updater/internal/frontend"
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/plugins/updater/internal/frontend"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 // window is the update window of a session.

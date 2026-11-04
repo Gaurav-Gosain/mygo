@@ -44,7 +44,7 @@ const (
 
 // cliTool is the package of the CLI, which projects of native UI depend on
 // as a tool of their module.
-const cliTool = "github.com/egoist/mygo/cmd/mygo"
+const cliTool = "github.com/Gaurav-Gosain/mygo/cmd/mygo"
 
 func runInit(args []string) error {
 	flags := newFlags("init", "[flags] <dir>", "Creates a new MyGo project. The web template has a TypeScript frontend built\nwith Vite: Bun installs its dependencies, the mygo-cli package among them,\nand runs its scripts, bun run dev and bun run build. The native template\nshows a user interface MyGo draws itself, written in Go with package ui:\nthe module has the CLI as a tool, for go tool mygo dev and go tool mygo\nbuild.")
@@ -82,7 +82,7 @@ func runInit(args []string) error {
 			return fmt.Errorf("the packages of %s are not built: run bun install && bun run build there first", checkout)
 		}
 		data.Runtime = "file:" + runtime
-		data.CLI, data.Mygo = "", "go run github.com/egoist/mygo/cmd/mygo"
+		data.CLI, data.Mygo = "", "go run github.com/Gaurav-Gosain/mygo/cmd/mygo"
 		if err := os.MkdirAll(dir, 0o755); err != nil {
 			return err
 		}
@@ -171,18 +171,18 @@ func writeProject(dir, tmpl string, data templateData, local string, tool bool) 
 		if tool {
 			gomod += "\ntool " + cliTool + "\n"
 		}
-		gomod += fmt.Sprintf("\nrequire github.com/egoist/mygo v0.0.0\n\nreplace github.com/egoist/mygo => %s\n", abs)
+		gomod += fmt.Sprintf("\nrequire github.com/Gaurav-Gosain/mygo v0.0.0\n\nreplace github.com/Gaurav-Gosain/mygo => %s\n", abs)
 	}
 	if err := os.WriteFile(filepath.Join(dir, "go.mod"), []byte(gomod), 0o644); err != nil {
 		return err
 	}
 	if local == "" {
-		get := []string{"get", "github.com/egoist/mygo@latest"}
+		get := []string{"get", "github.com/Gaurav-Gosain/mygo@latest"}
 		if tool {
 			get = []string{"get", "-tool", cliTool + "@latest"}
 		}
 		if err := goCommand(dir, nil, get...).Run(); err != nil {
-			warnf("Could not fetch github.com/egoist/mygo: %v", err)
+			warnf("Could not fetch github.com/Gaurav-Gosain/mygo: %v", err)
 		}
 	}
 	if err := goCommand(dir, nil, "mod", "tidy").Run(); err != nil {

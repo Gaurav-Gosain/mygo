@@ -6,13 +6,13 @@ import (
 	"slices"
 	"time"
 
-	"github.com/egoist/mygo/i18n"
-	"github.com/egoist/mygo/internal/platform"
-	"github.com/egoist/mygo/internal/raster"
-	"github.com/egoist/mygo/internal/scene"
-	"github.com/egoist/mygo/internal/surface"
-	"github.com/egoist/mygo/internal/text"
-	"github.com/egoist/mygo/transfer"
+	"github.com/Gaurav-Gosain/mygo/i18n"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/raster"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/surface"
+	"github.com/Gaurav-Gosain/mygo/internal/text"
+	"github.com/Gaurav-Gosain/mygo/transfer"
 )
 
 // Content is a user interface for a window, the value of

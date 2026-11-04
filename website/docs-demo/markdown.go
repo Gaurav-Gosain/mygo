@@ -4,8 +4,8 @@ import (
 	"math"
 	"time"
 
-	"github.com/egoist/mygo/ui"
-	"github.com/egoist/mygo/ui/markdown"
+	"github.com/Gaurav-Gosain/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/ui/markdown"
 )
 
 const demoMarkdown = "### A reply, streamed\n\n" +

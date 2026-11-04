@@ -136,6 +136,14 @@ var pangoLib struct {
 	fontGetHBFont             func(font uintptr) uintptr
 	hbNominalGlyph            func(font uintptr, r rune, glyph *uint32) int32
 	hbGlyphHAdvance           func(font uintptr, glyph uint32) int32
+	hbFontGetFace             func(font uintptr) uintptr
+	hbSetCreate               func() uintptr
+	hbSetDestroy              func(set uintptr)
+	hbSetHas                  func(set uintptr, v uint32) int32
+	hbSetNext                 func(set uintptr, v *uint32) int32
+	hbCollectLookups          func(face uintptr, table uint32, scripts, languages, features *uint32, lookups uintptr)
+	hbLookupCollectGlyphs     func(face uintptr, table, lookup uint32, before, input, after, output uintptr)
+	hbGlyphClass              func(face uintptr, glyph uint32) int32
 	metricsGetAscent          func(metrics uintptr) int32
 	metricsGetUnderlinePos    func(metrics uintptr) int32
 	metricsGetUnderlineThick  func(metrics uintptr) int32
@@ -340,6 +348,14 @@ func loadPango() error {
 	if hb, err := open("libharfbuzz.so.0"); err == nil {
 		bind(hb, &l.hbNominalGlyph, "hb_font_get_nominal_glyph")
 		bind(hb, &l.hbGlyphHAdvance, "hb_font_get_glyph_h_advance")
+		bind(hb, &l.hbFontGetFace, "hb_font_get_face")
+		bind(hb, &l.hbSetCreate, "hb_set_create")
+		bind(hb, &l.hbSetDestroy, "hb_set_destroy")
+		bind(hb, &l.hbSetHas, "hb_set_has")
+		bind(hb, &l.hbSetNext, "hb_set_next")
+		bind(hb, &l.hbCollectLookups, "hb_ot_layout_collect_lookups")
+		bind(hb, &l.hbLookupCollectGlyphs, "hb_ot_layout_lookup_collect_glyphs")
+		bind(hb, &l.hbGlyphClass, "hb_ot_layout_get_glyph_class")
 	}
 	if ft, err := open("libpangoft2-1.0.so.0"); err == nil {
 		bind(ft, &l.fontMapConfigChanged, "pango_fc_font_map_config_changed")
@@ -364,8 +380,11 @@ func loadPango() error {
 
 type pangoEngine struct {
 	shapeScratch
-	fontMap uintptr
-	context uintptr
+	// shapedSets are the glyphs of fonts that shaping may change (alone),
+	// HarfBuzz sets, by font and features.
+	shapedSets map[shapedSetKey]uintptr
+	fontMap    uintptr
+	context    uintptr
 
 	descs  map[Style]uintptr // font descriptions, by style
 	fonts  map[uintptr]*Font // by PangoFont
@@ -450,6 +469,7 @@ func newPango() (*pangoEngine, error) {
 		appFamily:   map[string]string{},
 		languages:   map[string]uintptr{},
 		hanFamilies: map[[2]string]string{},
+		shapedSets:  map[shapedSetKey]uintptr{},
 	}
 	// A font map of our own: the default one belongs to the thread that
 	// asks for it, and goroutines move between threads.
@@ -1329,4 +1349,10 @@ func (e *pangoEngine) forgetFonts() {
 		l.gObjectUnref(f.native)
 	}
 	clear(e.fonts)
+	for _, set := range e.shapedSets {
+		if set != 0 {
+			l.hbSetDestroy(set)
+		}
+	}
+	clear(e.shapedSets)
 }

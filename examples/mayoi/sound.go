@@ -8,7 +8,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/egoist/mygo/audio"
+	"github.com/Gaurav-Gosain/mygo/audio"
 )
 
 const sfxRate = 32000

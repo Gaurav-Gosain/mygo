@@ -17,7 +17,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/egoist/mygo/internal/download"
+	"github.com/Gaurav-Gosain/mygo/internal/download"
 )
 
 // TestRelease checks that every copy of NSIS that mygo build tries is

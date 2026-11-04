@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/egoist/mygo"
+	"github.com/Gaurav-Gosain/mygo"
 )
 
 // Todo is an item of the list.

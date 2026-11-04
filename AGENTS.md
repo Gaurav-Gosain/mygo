@@ -56,7 +56,7 @@ go vet ./... && GOOS=linux go vet ./... && GOOS=windows go vet ./...
 go vet -tags mygo_noinspector ./...        # production builds, without the inspector of native UI
 GOOS=js GOARCH=wasm go vet $(GOOS=js GOARCH=wasm go list ./... | grep -v /cmd/mygo)  # browsers, all but the CLI
 go test ./...                              # core (fake backend), tsgen, CLI, accelerator
-go build -trimpath -tags mygo_noinspector -ldflags "-s -w -X github.com/egoist/mygo.production=1" -o /tmp/counter-native ./examples/counter-native  # an app's release size, as the benchmarks build it
+go build -trimpath -tags mygo_noinspector -ldflags "-s -w -X github.com/Gaurav-Gosain/mygo.production=1" -o /tmp/counter-native ./examples/counter-native  # an app's release size, as the benchmarks build it
 MYGO_E2E=1 go test ./internal/e2e          # real GUI tests (macOS desktop session)
 bun install && bun run test && bun run typecheck   # the workspace, from the root
 bun run build                              # build internal/bridge/bridge.js and the npm packages' dist/

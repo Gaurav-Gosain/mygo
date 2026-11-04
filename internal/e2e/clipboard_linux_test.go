@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/egoist/mygo"
-	"github.com/egoist/mygo/transfer"
+	"github.com/Gaurav-Gosain/mygo"
+	"github.com/Gaurav-Gosain/mygo/transfer"
 )
 
 func TestUnifiedClipboardGTKForeignHTML(t *testing.T) {

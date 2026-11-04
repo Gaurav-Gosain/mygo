@@ -25,7 +25,7 @@ package loading
 import (
 	"time"
 
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 // Options are the settings of an indicator, each meaning loading.dev's

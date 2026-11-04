@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/egoist/mygo"
-	"github.com/egoist/mygo/internal/wait"
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo"
+	"github.com/Gaurav-Gosain/mygo/internal/wait"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 // The benchmarks time what the real backend adds to the Go side that the

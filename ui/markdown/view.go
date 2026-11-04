@@ -5,9 +5,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/egoist/mygo/internal/l10n"
-	"github.com/egoist/mygo/ui"
-	"github.com/egoist/mygo/ui/markdown/parser"
+	"github.com/Gaurav-Gosain/mygo/internal/l10n"
+	"github.com/Gaurav-Gosain/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/ui/markdown/parser"
 )
 
 // Options are how views show Markdown: their theme, what links and images

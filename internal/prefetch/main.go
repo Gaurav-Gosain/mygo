@@ -20,8 +20,8 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/egoist/mygo/internal/download"
-	"github.com/egoist/mygo/internal/nsis"
+	"github.com/Gaurav-Gosain/mygo/internal/download"
+	"github.com/Gaurav-Gosain/mygo/internal/nsis"
 )
 
 func main() {

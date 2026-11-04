@@ -20,7 +20,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/egoist/mygo"
+	"github.com/Gaurav-Gosain/mygo"
 )
 
 // Root is a directory, or a file, pages may watch.

@@ -9,9 +9,9 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/egoist/mygo/internal/rope"
-	"github.com/egoist/mygo/internal/text"
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/internal/rope"
+	"github.com/Gaurav-Gosain/mygo/internal/text"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 // view shows the lines of a Buffer: it keeps the display model in step

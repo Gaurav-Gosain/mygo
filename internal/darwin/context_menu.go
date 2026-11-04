@@ -7,7 +7,7 @@ import (
 
 	"github.com/ebitengine/purego/objc"
 
-	"github.com/egoist/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
 )
 
 // A page's context menu: WebKit builds its NSMenu and pops it up over the

@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 func TestCaretWidthRasterizesDIPsForInputAndArea(t *testing.T) {

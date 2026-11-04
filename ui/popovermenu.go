@@ -5,7 +5,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/egoist/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
 )
 
 // PopoverMenu gives the element a context menu, as ContextMenu does, which

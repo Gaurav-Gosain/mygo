@@ -8,7 +8,7 @@ Cookie, User-Agent, ...), with the standard options and a standard
 Use the plugin in Go:
 
 ```go
-import "github.com/egoist/mygo/plugins/fetch"
+import "github.com/Gaurav-Gosain/mygo/plugins/fetch"
 
 mygo.Use(fetch.Plugin) // or fetch.New(fetch.Options{Client: ..., Allow: ...})
 ```

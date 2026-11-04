@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/egoist/mygo"
+	"github.com/Gaurav-Gosain/mygo"
 )
 
 // TestNetwork reads the network status through the real backend. The

@@ -1,14 +1,14 @@
 package richtext
 
 import (
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/ui"
 	"iter"
 	"slices"
 	"strings"
 	"sync/atomic"
 	"unicode/utf8"
 
-	"github.com/egoist/mygo/internal/rope"
+	"github.com/Gaurav-Gosain/mygo/internal/rope"
 )
 
 // Text is text whose runs have attributes of their own, in

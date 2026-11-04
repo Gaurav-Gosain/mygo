@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/egoist/mygo"
-	"github.com/egoist/mygo/internal/wait"
+	"github.com/Gaurav-Gosain/mygo"
+	"github.com/Gaurav-Gosain/mygo/internal/wait"
 )
 
 const contextMenuPage = `<!doctype html><body style="margin:0;font:16px sans-serif">

@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/egoist/mygo/internal/gpu/gputest"
-	"github.com/egoist/mygo/internal/wait"
+	"github.com/Gaurav-Gosain/mygo/internal/gpu/gputest"
+	"github.com/Gaurav-Gosain/mygo/internal/wait"
 )
 
 var (

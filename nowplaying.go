@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/egoist/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
 )
 
 // NowPlayingModule shows what the app plays where the system shows media,

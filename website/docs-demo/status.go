@@ -8,7 +8,7 @@ import (
 	"math"
 	"time"
 
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 // Icons of the status demos.

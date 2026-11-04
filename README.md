@@ -1,3 +1,21 @@
+> **This is a fork of [egoist/mygo](https://github.com/egoist/mygo)**, kept for
+> [tuios](https://github.com/Gaurav-Gosain/tuios)'s desktop app. It is upstream's
+> release with these changes on top, each also offered upstream:
+>
+> - Terminal: scroll the scrollback by pixels on the frame clock (upstream PR: not sent yet)
+> - Terminal: add rows above the scrollback and keep the view where it is (upstream PR: not sent yet)
+> - Linux: draw at the monitor's refresh rate on Wayland (upstream PR: not sent yet)
+> - Linux: hand the P off while GLib waits, so an idle app wakes less (upstream PR: not sent yet)
+> - Text: lay out a terminal's runs without shaping where each rune keeps its glyph (upstream PR: not sent yet)
+> - Terminal: read sRGB to linear from a table for minimum contrast (upstream PR: not sent yet)
+> - Linux: call the GL functions of each batch without reflection (upstream PR: not sent yet)
+> - Linux: keep the decorations GTK draws while they stay the same (upstream PR: not sent yet)
+>
+> The module path is `github.com/Gaurav-Gosain/mygo`. Tags are
+> `v<upstream>-tuios.N`, and the fork follows upstream's releases:
+> the `tuios` branch is a release tag, the `patch/*` branches, and one commit
+> by `scripts/fork-rename.sh`. MIT, as upstream: see [LICENSE](LICENSE).
+
 <p align="center">
 <img width="800" height="360" alt="MyGo!!!!!" src="https://github.com/user-attachments/assets/c3eee9bc-5f22-4032-95b6-776e8381910a" />
 </p>
@@ -115,7 +133,7 @@ bun run dev
 An app of native UI needs Go alone:
 
 ```sh
-go run github.com/egoist/mygo/cmd/mygo@latest init -template native my-app
+go run github.com/Gaurav-Gosain/mygo/cmd/mygo@latest init -template native my-app
 cd my-app
 go tool mygo dev
 ```

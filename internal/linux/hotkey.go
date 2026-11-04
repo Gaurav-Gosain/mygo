@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"unsafe"
 
+	"github.com/Gaurav-Gosain/mygo/internal/accelerator"
 	"github.com/ebitengine/purego"
-	"github.com/egoist/mygo/internal/accelerator"
 )
 
 // On X11, global shortcuts grab their keys on the root window, and the key

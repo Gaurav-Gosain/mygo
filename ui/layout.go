@@ -4,7 +4,7 @@ import (
 	"math"
 	"slices"
 
-	"github.com/egoist/mygo/internal/text"
+	"github.com/Gaurav-Gosain/mygo/internal/text"
 )
 
 // The layout is CSS flexbox, or grid (grid.go), with box-sizing:

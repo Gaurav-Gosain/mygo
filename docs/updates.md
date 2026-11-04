@@ -209,7 +209,7 @@ in the background, shows the release notes of a new version and offers to
 install it, skip it or remind the user later.
 
 ```go
-import "github.com/egoist/mygo/plugins/updater"
+import "github.com/Gaurav-Gosain/mygo/plugins/updater"
 
 mygo.Use(updater.Plugin)
 ```

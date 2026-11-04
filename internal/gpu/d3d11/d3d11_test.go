@@ -10,10 +10,10 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/egoist/mygo/internal/gpu"
-	"github.com/egoist/mygo/internal/gpu/gputest"
-	"github.com/egoist/mygo/internal/scene"
-	"github.com/egoist/mygo/internal/wait"
+	"github.com/Gaurav-Gosain/mygo/internal/gpu"
+	"github.com/Gaurav-Gosain/mygo/internal/gpu/gputest"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/wait"
 )
 
 // hiddenWindow creates a window that never shows, for a swap chain.

@@ -14,7 +14,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/egoist/mygo/internal/uivet"
+	"github.com/Gaurav-Gosain/mygo/internal/uivet"
 )
 
 type vetPackage struct {
@@ -87,7 +87,7 @@ func runVetUI(args []string) error {
 	})
 	failures := 0
 	for _, pkg := range packages {
-		if pkg.ImportPath == "github.com/egoist/mygo/ui" {
+		if pkg.ImportPath == "github.com/Gaurav-Gosain/mygo/ui" {
 			continue
 		}
 		var files []*ast.File

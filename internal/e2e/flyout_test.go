@@ -13,8 +13,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/egoist/mygo"
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 const flyoutPage = `<body style="margin:0;background:transparent">` +

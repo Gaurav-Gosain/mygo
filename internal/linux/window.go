@@ -15,7 +15,7 @@ import (
 
 	"github.com/ebitengine/purego"
 
-	"github.com/egoist/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
 )
 
 // GDK window state flags.

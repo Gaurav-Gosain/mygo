@@ -3,7 +3,7 @@ package ui
 import (
 	"math"
 
-	"github.com/egoist/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
 )
 
 // StrokePolyline draws a line through points in DIPs, width DIPs wide,

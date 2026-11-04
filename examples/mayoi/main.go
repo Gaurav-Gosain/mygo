@@ -32,10 +32,10 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/egoist/mygo"
-	"github.com/egoist/mygo/plugins/game"
-	"github.com/egoist/mygo/plugins/game/gamepad"
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo"
+	"github.com/Gaurav-Gosain/mygo/plugins/game"
+	"github.com/Gaurav-Gosain/mygo/plugins/game/gamepad"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 // stepTime is the world's fixed step, as game.View runs it.

@@ -1,9 +1,9 @@
 package ui
 
 import (
-	"github.com/egoist/mygo/internal/platform"
-	"github.com/egoist/mygo/internal/scene"
-	"github.com/egoist/mygo/transfer"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/transfer"
 	"image/color"
 	"math"
 	"testing"

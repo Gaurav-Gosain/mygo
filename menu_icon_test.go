@@ -10,7 +10,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/egoist/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
 )
 
 // flag returns a PNG image of w by h pixels in one color.

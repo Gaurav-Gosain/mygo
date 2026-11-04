@@ -15,7 +15,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/egoist/mygo"
+	"github.com/Gaurav-Gosain/mygo"
 )
 
 // notes are the documents of the tests: plain text, asking to save when

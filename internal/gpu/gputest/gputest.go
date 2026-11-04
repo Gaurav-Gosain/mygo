@@ -12,8 +12,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/egoist/mygo/internal/raster"
-	"github.com/egoist/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/raster"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
 )
 
 // Scene returns a 320×600 scene with fills, borders of every width and

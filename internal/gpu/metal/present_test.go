@@ -5,8 +5,8 @@ package metal
 import (
 	"testing"
 
-	"github.com/egoist/mygo/internal/scene"
-	"github.com/egoist/mygo/internal/wait"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/wait"
 )
 
 // TestPresenter checks the presenter's fetches: a frame is not ready while

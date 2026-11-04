@@ -4,8 +4,8 @@ import (
 	"math"
 	"testing"
 
-	"github.com/egoist/mygo/internal/shaderir"
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/internal/shaderir"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 // Uniforms take numbers of any of Go's kinds, alone, in slices and in

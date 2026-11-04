@@ -6,12 +6,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/egoist/mygo/internal/gpu/gputest"
-	"github.com/egoist/mygo/internal/gpu/metal"
-	"github.com/egoist/mygo/internal/scene"
-	"github.com/egoist/mygo/internal/shaderir"
-	"github.com/egoist/mygo/internal/shaderir/interp"
-	"github.com/egoist/mygo/internal/shaderir/msl"
+	"github.com/Gaurav-Gosain/mygo/internal/gpu/gputest"
+	"github.com/Gaurav-Gosain/mygo/internal/gpu/metal"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/shaderir"
+	"github.com/Gaurav-Gosain/mygo/internal/shaderir/interp"
+	"github.com/Gaurav-Gosain/mygo/internal/shaderir/msl"
 )
 
 // TestMetal draws a shader with the Metal renderer, its Metal function

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/egoist/mygo/internal/contentrules"
-	"github.com/egoist/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/contentrules"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
 )
 
 // WebView2 has no content blockers, so a window applying content rules

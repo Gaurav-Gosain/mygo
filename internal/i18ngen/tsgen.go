@@ -7,7 +7,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/egoist/mygo/i18n"
+	"github.com/Gaurav-Gosain/mygo/i18n"
 )
 
 // TS returns the TypeScript module of a catalog, which pages import: the

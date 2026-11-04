@@ -5,9 +5,9 @@ package e2e
 import (
 	"testing"
 
-	"github.com/egoist/mygo"
-	win "github.com/egoist/mygo/internal/windows"
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo"
+	win "github.com/Gaurav-Gosain/mygo/internal/windows"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 // The maximize button a view draws, in a window without the system's

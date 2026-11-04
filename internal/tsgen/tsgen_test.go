@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/egoist/mygo/internal/tsgen/internal/fixture"
+	"github.com/Gaurav-Gosain/mygo/internal/tsgen/internal/fixture"
 )
 
 func modelOf(name string, svc any) Service {

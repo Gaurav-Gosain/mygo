@@ -3,7 +3,7 @@ package terminal
 import (
 	"time"
 
-	"github.com/egoist/mygo/plugins/terminal/internal/vt"
+	"github.com/Gaurav-Gosain/mygo/plugins/terminal/internal/vt"
 )
 
 // SearchStatus is how a search of the terminal goes (Terminal.Search,

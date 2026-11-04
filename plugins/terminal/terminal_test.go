@@ -17,14 +17,14 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/egoist/mygo/plugins/terminal/internal/vt"
-	"github.com/egoist/mygo/transfer"
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/plugins/terminal/internal/vt"
+	"github.com/Gaurav-Gosain/mygo/transfer"
+	"github.com/Gaurav-Gosain/mygo/ui"
 	"golang.org/x/image/font/gofont/gomono"
 	"golang.org/x/image/font/gofont/gomonobold"
 
 	// MyGo's own strings in Traditional Chinese, which a test shows.
-	_ "github.com/egoist/mygo/locales/zh-Hant"
+	_ "github.com/Gaurav-Gosain/mygo/locales/zh-Hant"
 )
 
 // loadLib loads libghostty-vt, or skips the test where it cannot.

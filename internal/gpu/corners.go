@@ -3,7 +3,7 @@ package gpu
 import (
 	"math"
 
-	"github.com/egoist/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
 )
 
 // Continuous corners (negative radii) cost Metal's shader far more than

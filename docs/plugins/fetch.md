@@ -17,8 +17,8 @@ Use the plugin in Go:
 
 ```go
 import (
-	"github.com/egoist/mygo"
-	"github.com/egoist/mygo/plugins/fetch"
+	"github.com/Gaurav-Gosain/mygo"
+	"github.com/Gaurav-Gosain/mygo/plugins/fetch"
 )
 
 func main() {

@@ -3,8 +3,8 @@ package ui
 import (
 	"errors"
 
-	"github.com/egoist/mygo/internal/gpu/d3d11"
-	"github.com/egoist/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/gpu/d3d11"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
 )
 
 func newGPURenderer(n platform.SurfaceNative) (gpuRenderer, error) {

@@ -5,8 +5,8 @@ package mygo
 import (
 	"testing"
 
-	"github.com/egoist/mygo/internal/fake"
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/internal/fake"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 func TestContentInspector(t *testing.T) {

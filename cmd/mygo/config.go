@@ -12,7 +12,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/egoist/mygo/i18n"
+	"github.com/Gaurav-Gosain/mygo/i18n"
 )
 
 // The configuration of a project is in one of these files at its root.

@@ -3,7 +3,7 @@ package terminal
 import (
 	"strings"
 
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 // Font is the font of a terminal's text, with what Ghostty's font options

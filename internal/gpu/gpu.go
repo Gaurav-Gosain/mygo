@@ -32,7 +32,7 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/egoist/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
 )
 
 // GoBytes returns the Go declaration of a variable name holding b, as

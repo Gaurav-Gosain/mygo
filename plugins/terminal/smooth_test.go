@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 // scrolled returns a terminal with 100 lines of history in a Tester, at

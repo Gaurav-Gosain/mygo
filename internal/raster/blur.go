@@ -5,7 +5,7 @@ import (
 	"runtime"
 	"sync"
 
-	"github.com/egoist/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
 )
 
 // blurredImage is an image blurred (Op.Blur), as an op draws it: its

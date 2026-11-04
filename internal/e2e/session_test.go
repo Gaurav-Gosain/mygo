@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/egoist/mygo"
-	"github.com/egoist/mygo/internal/wait"
+	"github.com/Gaurav-Gosain/mygo"
+	"github.com/Gaurav-Gosain/mygo/internal/wait"
 )
 
 // sessionServer serves a page titled "sessions" and, at /echo, the

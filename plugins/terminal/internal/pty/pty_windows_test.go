@@ -9,7 +9,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/egoist/mygo/internal/wait"
+	"github.com/Gaurav-Gosain/mygo/internal/wait"
 )
 
 // TestConPTYClearScreen clears the screen of PowerShell, whose prompt sat

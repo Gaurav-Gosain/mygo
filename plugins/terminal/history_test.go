@@ -334,3 +334,37 @@ func TestPrependHistoryPastLimit(t *testing.T) {
 		}
 	}
 }
+
+// TestSetScrollback lowers the limit of a full scrollback: it lets go of
+// the oldest rows as output comes, and PrependHistory's rows still stay.
+func TestSetScrollback(t *testing.T) {
+	loadLib(t)
+	term, err := New(Options{Conn: newPipe(), Scrollback: 4 << 20})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { term.Close() })
+	term.Resize(80, 10)
+	feed := func(n int) {
+		var b strings.Builder
+		for i := range n {
+			b.WriteString("row " + itoa(i) + "\r\n")
+		}
+		term.Feed([]byte(b.String()))
+	}
+	feed(20000)
+	full := term.HistoryRows()
+	term.SetScrollback(1 << 20)
+	feed(20000)
+	small := term.HistoryRows()
+	if small*2 > full {
+		t.Fatalf("the scrollback holds %d rows at 1 MB, %d at 4 MB: the lower limit did not take", small, full)
+	}
+	var older strings.Builder
+	for i := range 1000 {
+		older.WriteString("old " + itoa(i) + "\r\n")
+	}
+	if added, err := term.PrependHistory([]byte(older.String())); err != nil || added != 1000 {
+		t.Fatalf("PrependHistory added %d rows (%v), want 1000", added, err)
+	}
+}

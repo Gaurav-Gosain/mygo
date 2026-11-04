@@ -40,6 +40,32 @@ func TestMenuColors(t *testing.T) {
 	}
 }
 
+// Items over the material are the premultiplied pixels that show as they
+// were drawn over black and over white: WinUI's translucent highlights
+// as translucent, text as opaque as it covers, and nothing as nothing.
+func TestUnblend(t *testing.T) {
+	over := func(c uint32, a float64) (onBlack, onWhite uint32) {
+		return blend(c, 0x000000, a), blend(c, 0xFFFFFF, a)
+	}
+	for _, c := range []struct {
+		name  string
+		color uint32
+		alpha float64
+		want  uint32
+	}{
+		{"nothing", 0x000000, 0, 0x00000000},
+		{"opaque text", 0x1A1A1A, 1, 0xFF1A1A1A},
+		{"a dark menu's highlight", 0xFFFFFF, 0x0F / 255.0, 0x0F0F0F0F},
+		{"a light menu's highlight", 0x000000, 0x09 / 255.0, 0x09000000},
+		{"half covered", 0xFFFFFF, 0.5, 0x80808080},
+	} {
+		k, w := over(c.color, c.alpha)
+		if got := unblend(k, w); got != c.want {
+			t.Errorf("%s: unblend(%#x, %#x) = %#x, want %#x", c.name, k, w, got, c.want)
+		}
+	}
+}
+
 // A label of a menu item drawn as wide as it measures shows all its ink,
 // that past its advance included: Microsoft YaHei UI's, the menu font of
 // Chinese Windows, reaches a pixel past it in 粘贴, 删除 and 全选 (#1028).
@@ -58,7 +84,7 @@ func TestMenuLabelInk(t *testing.T) {
 	}
 	glyphs := createFont(-toPx(menuGlyphSize, dpi), "Segoe UI")
 	defer procDeleteObject.Call(glyphs)
-	b := &Backend{themeSource: "light", menuFonts: map[int]menuFonts{dpi: {text: text, glyphs: glyphs}}}
+	b := &Backend{themeSource: "light", menuFonts: map[menuFontKey]menuFonts{{dpi: dpi}: {text: text, glyphs: glyphs}}}
 	p := b.menuPalette()
 	back := dibColor(p.back)
 	screen, _, _ := procGetDC.Call(0)

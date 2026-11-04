@@ -13,12 +13,15 @@ import (
 
 // Windows 11 still draws Win32 menus as Windows 10 did, while its own menus
 // (WinUI's MenuFlyout and MenuBar, File Explorer's context menu) have more
-// room, highlights with rounded corners inset from the edges, and
-// shortcuts in a fainter color. MyGo draws the items of its popup menus so
-// there (MFT_OWNERDRAW), and those of the menu bar (darkmenu.go). The menus
-// themselves stay Windows': their windows, rounded corners, animations and
-// keyboard, and the items keep their strings, which mnemonics, screen
-// readers and the tests read. Windows 10 keeps its own menus.
+// room, highlights with rounded corners inset from the edges, shortcuts
+// smaller and in a fainter color, the corners of flyouts, and Acrylic
+// behind them. MyGo draws the items of its popup menus so there
+// (MFT_OWNERDRAW), and those of the menu bar (darkmenu.go), and gives the
+// menus' windows those corners and, from Windows 11 22H2, the material
+// (menuGlass). The menus themselves stay Windows': their windows,
+// animations and keyboard, and the items keep their strings, which
+// mnemonics, screen readers and the tests read. Windows 10 keeps its own
+// menus.
 
 const (
 	wmInitMenuPopup = 0x0117
@@ -47,22 +50,32 @@ var (
 	procSetMenuInfo                = user32.NewProc("SetMenuInfo")
 	procGetSysColor                = user32.NewProc("GetSysColor")
 	procSystemParametersInfoForDpi = user32.NewProc("SystemParametersInfoForDpi")
+	procGetTextMetricsW            = gdi32.NewProc("GetTextMetricsW")
 )
 
-// Popup items' metrics, in DIPs, after WinUI's MenuFlyoutItem: a highlight
-// inset from the menu's sides with rounded corners, the text past its
-// padding, and marks (checks, the submenus' chevrons) in a column of
-// their own.
+// Popup items' metrics, in DIPs, after WinUI's MenuFlyoutItem (its
+// margin of 4,2,4,2, padding of 11 at the sides, and 32 from one item to
+// the next): a highlight inset from the menu's sides and from the next
+// items with rounded corners, the text past its padding, shortcuts in
+// WinUI's Caption, and marks (checks, the submenus' chevrons) in a column
+// of their own. Separators are File Explorer's, 9 tall.
 const (
 	menuItemHeight      = 32
 	menuSeparatorHeight = 9
 	menuInset           = 4  // the highlight from the menu's sides
-	menuPadding         = 12 // the text from the highlight's sides
+	menuItemMargin      = 2  // the highlight from the item's top and bottom
+	menuEdge            = 2  // the menu's padding above its first item and below its last
+	menuPadding         = 11 // the text from the highlight's sides
 	menuRadius          = 4
 	menuMarkColumn      = 16 + 12 // a check, and the gap after it
-	menuAccelGap        = 32      // the least between a label and its shortcut
+	menuAccelGap        = 24      // the least between a label and its shortcut
+	menuChevronGap      = 24      // the least between a label and a submenu's chevron
 	menuChevron         = 12
 	menuGlyphSize       = 12
+	// menuLabelSize and menuAccelSize are the sizes of WinUI's labels
+	// (Body) and shortcuts (Caption), to the 12 of the system's menu font.
+	menuLabelSize = 14
+	menuAccelSize = 12
 )
 
 // The menu bar's, which grows to WinUI's room.
@@ -114,15 +127,15 @@ func (l *menuLook) ftype() uint32 {
 	return 0
 }
 
-// padding returns the room above and below the item: the menu's padding,
-// as much as its highlights' inset from its sides, above its first item
-// and below its last.
+// padding returns the room above and below the item: the menu's padding
+// above its first item and below its last, which with the highlight's
+// margin puts it as far from the menu's top and bottom as from its sides.
 func (l *menuLook) padding(dpi int) (top, bottom int32) {
 	if l.first {
-		top = toPx(menuInset, dpi)
+		top = toPx(menuEdge, dpi)
 	}
 	if l.last {
-		bottom = toPx(menuInset, dpi)
+		bottom = toPx(menuEdge, dpi)
 	}
 	return top, bottom
 }
@@ -174,6 +187,17 @@ type menuPalette struct {
 	// border is the menu's outline, which DWM draws around the rounded
 	// window, DWMWA_COLOR_DEFAULT for its own.
 	border uint32
+	// wash and rule are the highlight and the separators of a menu with
+	// the material behind it (menuGlass): WinUI's translucent fills
+	// (SubtleFillColorSecondary, DividerStrokeColorDefault) over it,
+	// which the opaque plate and line are over the background.
+	wash, rule tint
+}
+
+// tint is a color, a COLORREF, at an opacity from 0 to 1.
+type tint struct {
+	color uint32
+	alpha float64
 }
 
 const (
@@ -198,10 +222,12 @@ func (b *Backend) menuPalette() menuPalette {
 			border: dwmColorDefault}
 	case b.isDark():
 		return menuPalette{back: 0x2B2B2B, plate: 0x383838, text: 0xFFFFFF, plateText: 0xFFFFFF,
-			secondary: 0xCFCFCF, disabled: 0x787878, line: 0x3D3D3D, border: 0x3E3E3E}
+			secondary: 0xCFCFCF, disabled: 0x787878, line: 0x3D3D3D, border: 0x3E3E3E,
+			wash: tint{0xFFFFFF, 0x0F / 255.0}, rule: tint{0xFFFFFF, 0x15 / 255.0}}
 	}
 	return menuPalette{back: 0xF9F9F9, plate: 0xF0F0F0, text: 0x1A1A1A, plateText: 0x1A1A1A,
-		secondary: 0x5F5F5F, disabled: 0x9F9F9F, line: 0xEAEAEA, border: 0xE5E5E5}
+		secondary: 0x5F5F5F, disabled: 0x9F9F9F, line: 0xEAEAEA, border: 0xE5E5E5,
+		wash: tint{0x000000, 0x09 / 255.0}, rule: tint{0x000000, 0x0F / 255.0}}
 }
 
 // menuBrush returns a brush of a color, made once.
@@ -217,11 +243,20 @@ func (b *Backend) menuBrush(color uint32) uintptr {
 	return br
 }
 
-// menuFonts are the fonts of popup items at a DPI: the text, and the
-// glyphs of the marks.
+// menuFonts are the fonts of popup items at a DPI: the labels, the
+// shortcuts, and the glyphs of the marks.
 type menuFonts struct {
-	text, glyphs uintptr
-	fluent       bool // the glyphs are Segoe Fluent Icons'
+	text, accel, glyphs uintptr
+	fluent              bool // the glyphs are Segoe Fluent Icons'
+}
+
+// menuFontKey is what the fonts of popup items are made for: a DPI, and
+// whether they are antialiased in grayscale, for a menu with the material
+// behind it, which ClearType's colored edges have no background to blend
+// with.
+type menuFontKey struct {
+	dpi  int
+	gray bool
 }
 
 // logFont is LOGFONTW.
@@ -245,11 +280,15 @@ type nonClientMetrics struct {
 	PaddedBorderWidth                      int32
 }
 
-// menuFace returns the fonts of popup items at dpi: the menu font of the
-// system, which follows the size of text of Accessibility, from its 12
-// pixels to WinUI's 14, in Segoe UI Variable where it is Segoe UI.
-func (b *Backend) menuFace(dpi int) menuFonts {
-	if f, ok := b.menuFonts[dpi]; ok {
+// menuFace returns the fonts of popup items at dpi, in grayscale for a
+// menu with the material behind it: the menu font of the system, which
+// follows the size of text of Accessibility, from its 12 pixels to
+// WinUI's 14 for the labels and 12 for the shortcuts, in Segoe UI
+// Variable where it is Segoe UI, in the optical sizes WinUI's text takes
+// at those sizes (Text and Small).
+func (b *Backend) menuFace(dpi int, gray bool) menuFonts {
+	key := menuFontKey{dpi, gray}
+	if f, ok := b.menuFonts[key]; ok {
 		return f
 	}
 	var ncm nonClientMetrics
@@ -259,21 +298,28 @@ func (b *Backend) menuFace(dpi int) menuFonts {
 	if r, _, _ := procSystemParametersInfoForDpi.Call(spiGetNonClientMetrics, uintptr(ncm.Size), uintptr(unsafe.Pointer(&ncm)), 0, uintptr(dpi)); r != 0 {
 		lf = ncm.MenuFont
 	}
-	lf.Height = int32(math.Round(float64(lf.Height) * 14 / 12))
-	f := menuFonts{}
-	if string(utf16Decode(lf.FaceName[:])) == "Segoe UI" {
+	if gray {
+		const antialiasedQuality = 4
+		lf.Quality = antialiasedQuality
+	}
+	segoe := string(utf16Decode(lf.FaceName[:])) == "Segoe UI"
+	font := func(size float64, variable string) uintptr {
 		v := lf
-		v.FaceName = [32]uint16{}
-		copy(v.FaceName[:], utf16z("Segoe UI Variable Text"))
-		f.text, _, _ = procCreateFontIndirectW.Call(uintptr(unsafe.Pointer(&v)))
-		if !fontFace(f.text, "Segoe UI Variable Text") {
-			procDeleteObject.Call(f.text)
-			f.text = 0
+		v.Height = int32(math.Round(float64(lf.Height) * size / 12))
+		if segoe {
+			v.FaceName = [32]uint16{}
+			copy(v.FaceName[:], utf16z(variable))
+			f, _, _ := procCreateFontIndirectW.Call(uintptr(unsafe.Pointer(&v)))
+			if fontFace(f, variable) {
+				return f
+			}
+			procDeleteObject.Call(f)
+			v.FaceName = lf.FaceName
 		}
+		f, _, _ := procCreateFontIndirectW.Call(uintptr(unsafe.Pointer(&v)))
+		return f
 	}
-	if f.text == 0 {
-		f.text, _, _ = procCreateFontIndirectW.Call(uintptr(unsafe.Pointer(&lf)))
-	}
+	f := menuFonts{text: font(menuLabelSize, "Segoe UI Variable Text"), accel: font(menuAccelSize, "Segoe UI Variable Small")}
 	size := -toPx(menuGlyphSize, dpi)
 	f.glyphs, f.fluent = createFont(size, "Segoe Fluent Icons"), true
 	if !fontFace(f.glyphs, "Segoe Fluent Icons") {
@@ -281,9 +327,9 @@ func (b *Backend) menuFace(dpi int) menuFonts {
 		f.glyphs, f.fluent = createFont(size, "Segoe MDL2 Assets"), false
 	}
 	if b.menuFonts == nil {
-		b.menuFonts = map[int]menuFonts{}
+		b.menuFonts = map[menuFontKey]menuFonts{}
 	}
-	b.menuFonts[dpi] = f
+	b.menuFonts[key] = f
 	return f
 }
 
@@ -293,17 +339,19 @@ func (b *Backend) menuFace(dpi int) menuFonts {
 func (b *Backend) dropMenuFonts() {
 	for _, f := range b.menuFonts {
 		procDeleteObject.Call(f.text)
+		procDeleteObject.Call(f.accel)
 		procDeleteObject.Call(f.glyphs)
 	}
 	b.menuFonts, b.menuExtra = nil, nil
 }
 
-// The glyphs of Segoe Fluent Icons, also in Segoe MDL2 Assets.
+// The glyphs of Segoe Fluent Icons, also in Segoe MDL2 Assets: WinUI's
+// check, and its submenus' chevrons.
 const (
 	glyphCheck       = 0xE73E // CheckMark
 	glyphBullet      = 0xE915 // RadioBullet
-	glyphChevron     = 0xE76C // ChevronRight
-	glyphChevronLeft = 0xE76B // ChevronLeft
+	glyphChevron     = 0xE974 // ChevronRightMed
+	glyphChevronLeft = 0xE973 // ChevronLeftMed
 )
 
 // menuItemMessage handles the messages of the popup items MyGo draws, which
@@ -349,6 +397,8 @@ func (b *Backend) menuItemMessage(hwnd uintptr, m uint32, wp, lp uintptr) (uintp
 	return 0, false
 }
 
+// setMenuBackground paints the menu's background, around its items, in
+// the appearance's color, or none where the material shows (dressMenu).
 func (b *Backend) setMenuBackground(menu uintptr) {
 	type menuInfo struct {
 		Size, Mask, Style, CyMax uint32
@@ -356,7 +406,11 @@ func (b *Backend) setMenuBackground(menu uintptr) {
 		ContextHelpID            uint32
 		MenuData                 uintptr
 	}
-	mi := menuInfo{Mask: mimBackground, Back: b.menuBrush(b.menuPalette().back)}
+	back := b.menuPalette().back
+	if b.glassMenu(menu) {
+		back = 0 // black, which DWM shows as transparent over the material
+	}
+	mi := menuInfo{Mask: mimBackground, Back: b.menuBrush(back)}
 	mi.Size = uint32(unsafe.Sizeof(mi))
 	procSetMenuInfo.Call(menu, uintptr(unsafe.Pointer(&mi)))
 }
@@ -401,7 +455,7 @@ func (b *Backend) measureItem(hwnd uintptr, l *menuLook, mis *measureItemStruct)
 // itemWidth returns the width an item that isn't a separator needs at dpi:
 // its text and marks, past the highlight's inset and padding.
 func (b *Backend) itemWidth(l *menuLook, dpi int) int32 {
-	f := b.menuFace(dpi)
+	f := b.menuFace(dpi, b.menuGlass)
 	dc, _, _ := procGetDC.Call(0)
 	defer procReleaseDC.Call(0, dc)
 	w := toPx(menuInset+menuPadding, dpi)*2 + textWidth(dc, f.text, l.label)
@@ -412,10 +466,10 @@ func (b *Backend) itemWidth(l *menuLook, dpi int) int32 {
 		w += toPx(menuIconColumn, dpi)
 	}
 	if l.accel != "" {
-		w += toPx(menuAccelGap, dpi) + textWidth(dc, f.text, l.accel)
+		w += toPx(menuAccelGap, dpi) + textWidth(dc, f.accel, l.accel)
 	}
 	if l.submenu {
-		w += toPx(menuAccelGap/2+menuChevron, dpi)
+		w += toPx(menuChevronGap+menuChevron, dpi)
 	}
 	return w
 }
@@ -453,18 +507,28 @@ func (b *Backend) drawItem(hwnd uintptr, l *menuLook, d *drawItemStruct) {
 	selected := state&odsSelected != 0 && !l.separator
 	inset := toPx(menuInset, dpi)
 	top, bottom := l.padding(dpi)
+	margin := toPx(menuItemMargin, dpi)
 	var plate *rect
 	if selected {
-		plate = &rect{inset, top, r.Right - r.Left - inset, r.Bottom - r.Top - bottom}
+		plate = &rect{inset, top + margin, r.Right - r.Left - inset, r.Bottom - r.Top - bottom - margin}
 	}
-	paintItem(d.DC, r, p.back, plate, p.plate, float64(toPx(menuRadius, dpi)), func(img *bitmap, r rect) {
+	glass := b.glassMenu(l.menu)
+	fill := itemFill{back: p.back, plate: p.plate, alpha: 1}
+	if glass {
+		fill = itemFill{plate: p.wash.color, alpha: p.wash.alpha, glass: true}
+	}
+	paintItem(d.DC, r, fill, plate, float64(toPx(menuRadius, dpi)), func(img *bitmap, r rect) {
 		dc := img.dc
 		r.Top, r.Bottom = r.Top+top, r.Bottom-bottom
 		if l.separator {
 			thick := max(toPx(1, dpi), 1)
-			y := (r.Bottom - r.Top - thick) / 2
+			y := r.Top + (r.Bottom-r.Top-thick)/2
 			line := rect{r.Left + inset, y, r.Right - inset, y + thick}
-			fillColor(dc, &line, p.line)
+			if glass {
+				washRect(img, r.Right-r.Left, line, p.rule)
+			} else {
+				fillColor(dc, &line, p.line)
+			}
 			return
 		}
 		fore, secondary := p.text, p.secondary
@@ -477,7 +541,7 @@ func (b *Backend) drawItem(hwnd uintptr, l *menuLook, d *drawItemStruct) {
 		if state&(odsGrayed|odsDisabled) != 0 {
 			fore, secondary = p.disabled, p.disabled
 		}
-		f := b.menuFace(dpi)
+		f := b.menuFace(dpi, glass)
 		procSetBkMode.Call(dc, 1) // TRANSPARENT
 		x := r.Left + toPx(menuInset+menuPadding, dpi)
 		right := r.Right - toPx(menuInset+menuPadding, dpi)
@@ -533,18 +597,26 @@ func (b *Backend) drawItem(hwnd uintptr, l *menuLook, d *drawItemStruct) {
 		// the menu font of Chinese Windows, by a pixel (#1028). DrawText
 		// would cut that off at the end of the text's rectangle; the
 		// padding past it has room for it.
-		flags := uintptr(dtSingleLine | dtVCenter | dtNoClip)
+		flags := uintptr(dtSingleLine | dtNoClip)
 		if state&odsNoAccel != 0 {
 			flags |= dtHidePrefix
 		}
 		procSetTextColor.Call(dc, uintptr(fore))
-		text := rect{x, r.Top, right, r.Bottom}
+		// The label in the middle of the item, and its shortcut, smaller,
+		// on its baseline.
+		label := textMetricsOf(dc)
+		y := r.Top + (r.Bottom-r.Top-label.Height)/2
+		text := rect{x, y, right, y + label.Height}
 		s := u16(l.label)
 		procDrawTextW.Call(dc, uintptr(unsafe.Pointer(s)), ^uintptr(0), uintptr(unsafe.Pointer(&text)), flags)
 		if l.accel != "" {
+			procSelectObject.Call(dc, f.accel)
+			accel := textMetricsOf(dc)
+			y += label.Ascent - accel.Ascent
+			text := rect{x, y, right, y + accel.Height}
 			procSetTextColor.Call(dc, uintptr(secondary))
 			s := u16(l.accel)
-			procDrawTextW.Call(dc, uintptr(unsafe.Pointer(s)), ^uintptr(0), uintptr(unsafe.Pointer(&text)), dtSingleLine|dtVCenter|dtRight|dtNoPrefix|dtNoClip)
+			procDrawTextW.Call(dc, uintptr(unsafe.Pointer(s)), ^uintptr(0), uintptr(unsafe.Pointer(&text)), dtSingleLine|dtRight|dtNoPrefix|dtNoClip)
 		}
 	})
 	// Windows draws the arrow of a submenu after the item, in its colors:
@@ -552,35 +624,118 @@ func (b *Backend) drawItem(hwnd uintptr, l *menuLook, d *drawItemStruct) {
 	procExcludeClipRect.Call(d.DC, uintptr(r.Left), uintptr(r.Top), uintptr(r.Right), uintptr(r.Bottom))
 }
 
+// itemFill is how an item's background and highlight are painted, colors
+// as COLORREFs: the highlight (plate) at alpha over the back, or, with
+// glass, over nothing, for the material behind the menu to show through
+// both.
+type itemFill struct {
+	back, plate uint32
+	alpha       float64
+	glass       bool
+}
+
 // paintItem draws an item in a bitmap its size, then copies it to the
 // menu's DC at r: the background, a highlight with rounded corners
 // (plate, in the item's coordinates, nil for none) antialiased over it,
 // and what draw draws over them, in the bitmap's coordinates.
-func paintItem(dc uintptr, r rect, back uint32, plate *rect, plateColor uint32, radius float64, draw func(img *bitmap, r rect)) {
+//
+// With glass, GDI, which knows nothing of alpha, draws the item twice,
+// over black and over white, and the pixels copied are premultiplied
+// ones that show as both did: what shows over the material is as
+// opaque as the two drawings differ little.
+func paintItem(dc uintptr, r rect, f itemFill, plate *rect, radius float64, draw func(img *bitmap, r rect)) {
 	w, h := r.Right-r.Left, r.Bottom-r.Top
 	if w <= 0 || h <= 0 {
 		return
 	}
-	img := newBitmap(dc, w, h)
-	if img == nil {
-		return
-	}
-	defer img.free()
-	bg, fg := dibColor(back), dibColor(plateColor)
-	for i := range img.px {
-		img.px[i] = bg
-	}
-	if plate != nil {
-		for y := max(plate.Top, 0); y < min(plate.Bottom, h); y++ {
-			for x := max(plate.Left, 0); x < min(plate.Right, w); x++ {
-				img.px[y*w+x] = blend(fg, bg, roundedCoverage(float64(x)+0.5, float64(y)+0.5, plate, radius))
+	render := func(back uint32) *bitmap {
+		img := newBitmap(dc, w, h)
+		if img == nil {
+			return nil
+		}
+		bg, fg := dibColor(back), dibColor(f.plate)
+		for i := range img.px {
+			img.px[i] = bg
+		}
+		if plate != nil {
+			for y := max(plate.Top, 0); y < min(plate.Bottom, h); y++ {
+				for x := max(plate.Left, 0); x < min(plate.Right, w); x++ {
+					img.px[y*w+x] = blend(fg, bg, f.alpha*roundedCoverage(float64(x)+0.5, float64(y)+0.5, plate, radius))
+				}
 			}
 		}
+		procGdiFlush.Call()
+		draw(img, rect{0, 0, w, h})
+		procGdiFlush.Call()
+		return img
 	}
-	procGdiFlush.Call()
-	draw(img, rect{0, 0, w, h})
-	procGdiFlush.Call()
-	procBitBlt.Call(dc, uintptr(r.Left), uintptr(r.Top), uintptr(w), uintptr(h), img.dc, 0, 0, srcCopy)
+	if !f.glass {
+		if img := render(f.back); img != nil {
+			procBitBlt.Call(dc, uintptr(r.Left), uintptr(r.Top), uintptr(w), uintptr(h), img.dc, 0, 0, srcCopy)
+			img.free()
+		}
+		return
+	}
+	black := render(0x000000)
+	if black == nil {
+		return
+	}
+	defer black.free()
+	white := render(0xFFFFFF)
+	if white == nil {
+		return
+	}
+	defer white.free()
+	for i, k := range black.px {
+		black.px[i] = unblend(k, white.px[i])
+	}
+	procBitBlt.Call(dc, uintptr(r.Left), uintptr(r.Top), uintptr(w), uintptr(h), black.dc, 0, 0, srcCopy)
+}
+
+// unblend returns the premultiplied pixel, 0xAARRGGBB, that shows as
+// onBlack over black and as onWhite over white, DIB pixels: its alpha is
+// how much less than white's the black background shows through, on
+// average over the channels, and its colors what shows over black, at
+// most its alpha.
+func unblend(onBlack, onWhite uint32) uint32 {
+	sum := 0
+	for shift := 0; shift < 24; shift += 8 {
+		sum += 255 - int(onWhite>>shift&0xFF) + int(onBlack>>shift&0xFF)
+	}
+	a := min(max((sum+1)/3, 0), 255)
+	px := uint32(a) << 24
+	for shift := 0; shift < 24; shift += 8 {
+		px |= uint32(min(int(onBlack>>shift&0xFF), a)) << shift
+	}
+	return px
+}
+
+// washRect blends a color at its opacity over the pixels of r in a
+// bitmap w pixels wide.
+func washRect(img *bitmap, w int32, r rect, t tint) {
+	h := int32(len(img.px)) / w
+	c := dibColor(t.color)
+	for y := max(r.Top, 0); y < min(r.Bottom, h); y++ {
+		for x := max(r.Left, 0); x < min(r.Right, w); x++ {
+			img.px[y*w+x] = blend(c, img.px[y*w+x], t.alpha)
+		}
+	}
+}
+
+// textMetric is TEXTMETRICW.
+type textMetric struct {
+	Height, Ascent, Descent, InternalLeading, ExternalLeading int32
+	AveCharWidth, MaxCharWidth, Weight, Overhang              int32
+	DigitizedAspectX, DigitizedAspectY                        int32
+	FirstChar, LastChar, DefaultChar, BreakChar               uint16
+	Italic, Underlined, StruckOut, PitchAndFamily, CharSet    uint8
+}
+
+// textMetricsOf returns the metrics of the font selected into dc.
+func textMetricsOf(dc uintptr) textMetric {
+	var tm textMetric
+	procGetTextMetricsW.Call(dc, uintptr(unsafe.Pointer(&tm)))
+	return tm
 }
 
 // roundedCoverage returns how much of the pixel centered at (x, y) a
@@ -607,21 +762,37 @@ func blend(a, b uint32, t float64) uint32 {
 // A menu with items its app draws loses Windows 11's frame: its window is
 // square, under the drop shadow of its class (CS_DROPSHADOW) along two
 // sides. While the menus show, a hook of the main thread rounds the windows
-// of menus as they are created, as Windows rounds its own, outlined in
-// their colors, and takes the class's shadow off, for DWM's around the
-// rounded window.
+// of menus as they are created, with the corners of WinUI's flyouts,
+// outlined in their colors, and takes the class's shadow off, for DWM's
+// around the rounded window.
+//
+// It also subclasses them, to put the material of WinUI's menus, Acrylic
+// (DWMSBT_TRANSIENTWINDOW), behind those of the menus MyGo draws, once
+// they say which menu they show (dressMenu), on Windows 11 22H2 and later
+// with transparency effects on and no contrast theme (menuGlass). The
+// frame extended over the whole window, DWM shows the material where the
+// window's pixels are transparent: the menu's background, its border,
+// which the subclass paints so, and what the items leave so (paintItem).
+// Elsewhere menus keep their solid background.
 
 const (
 	whCallWndProc = 4
 	wmCreate      = 0x0001
+	wmNCDestroy   = 0x0082
+	wmPrint       = 0x0317
+	wmPrintClient = 0x0318
+	prfNonClient  = 0x0002
 	gclStyle      = ^uintptr(25) // -26
 	gcwAtom       = ^uintptr(31) // -32
+	gwlpWndProc   = ^uintptr(3)  // -4
 	menuClassAtom = 0x8000       // #32768
 	csDropShadow  = 0x00020000
+	wsExLayoutRTL = 0x00400000
+	blackBrush    = 4
 
-	dwmwcpRoundSmall = 3
 	dwmwaBorderColor = 34
 	dwmColorDefault  = 0xFFFFFFFF
+	backdropAuto     = 0 // DWMSBT_AUTO, menus' own
 )
 
 var (
@@ -630,9 +801,15 @@ var (
 	procCallNextHookEx      = user32.NewProc("CallNextHookEx")
 	procGetClassLongPtrW    = user32.NewProc("GetClassLongPtrW")
 	procSetClassLongPtrW    = user32.NewProc("SetClassLongPtrW")
+	procCallWindowProcW     = user32.NewProc("CallWindowProcW")
+	procGetStockObject      = gdi32.NewProc("GetStockObject")
+	procSaveDC              = gdi32.NewProc("SaveDC")
+	procRestoreDC           = gdi32.NewProc("RestoreDC")
 
-	// menuHookCallback is made once: callbacks are never freed.
+	// menuHookCallback and menuProcCallback are made once: callbacks are
+	// never freed.
 	menuHookCallback = sync.OnceValue(func() uintptr { return syscall.NewCallback(menuHook) })
+	menuProcCallback = sync.OnceValue(func() uintptr { return syscall.NewCallback(menuProc) })
 )
 
 // cwpStruct is CWPSTRUCT.
@@ -642,12 +819,34 @@ type cwpStruct struct {
 	Hwnd           uintptr
 }
 
+// menuWindow is the window of a menu the subclass sees: the window
+// procedure it replaced, the menu it showed last, and whether the
+// material is behind it.
+type menuWindow struct {
+	proc, menu uintptr
+	glass      bool
+}
+
+// menuGlass reports whether the menus MyGo draws show the material behind
+// them, as Windows 11's own do: from 22H2, when transparency effects are
+// on (Personalization > Colors) and no contrast theme is. Windows 11's
+// first release and Windows 10 have no material for them.
+func menuGlass() bool {
+	if !fluentMenus() || !systemBackdrops() || highContrastOn() {
+		return false
+	}
+	v, ok := regDWORD(hkeyCurrentUser, personalizeKey, "EnableTransparency")
+	return !ok || v != 0
+}
+
 // hookMenus hooks the main thread's messages while its menus show (on), or
-// unhooks them.
+// unhooks them. Hooking, it reads whether its menus show the material,
+// which they all do while they show, or none.
 func (b *Backend) hookMenus(on bool) {
 	switch {
 	case !fluentMenus():
 	case on && b.menuHook == 0:
+		b.menuGlass = menuGlass()
 		b.menuHook, _, _ = procSetWindowsHookExW.Call(whCallWndProc, menuHookCallback(), 0, uintptr(currentThreadID()))
 	case !on && b.menuHook != 0:
 		procUnhookWindowsHookEx.Call(b.menuHook)
@@ -660,6 +859,7 @@ func menuHook(code, wp, lp uintptr) uintptr {
 		if m := (*cwpStruct)(native(lp)); m.Message == wmCreate {
 			if atom, _, _ := procGetClassLongPtrW.Call(m.Hwnd, gcwAtom); atom == menuClassAtom {
 				roundMenu(m.Hwnd, theBackend.menuPalette().border)
+				theBackend.subclassMenu(m.Hwnd)
 			}
 		}
 	}
@@ -667,12 +867,150 @@ func menuHook(code, wp, lp uintptr) uintptr {
 	return r
 }
 
-// roundMenu gives a menu's window, being created, Windows 11's frame.
+// roundMenu gives a menu's window, being created, Windows 11's frame,
+// with the corners of WinUI's menus (OverlayCornerRadius, 8 pixels).
 func roundMenu(hwnd uintptr, border uint32) {
-	pref := int32(dwmwcpRoundSmall)
+	pref := int32(dwmwcpRound)
 	procDwmSetWindowAttribute.Call(hwnd, dwmwaWindowCornerPreference, uintptr(unsafe.Pointer(&pref)), 4)
 	procDwmSetWindowAttribute.Call(hwnd, dwmwaBorderColor, uintptr(unsafe.Pointer(&border)), 4)
 	if style, _, _ := procGetClassLongPtrW.Call(hwnd, gclStyle); style&csDropShadow != 0 {
 		procSetClassLongPtrW.Call(hwnd, gclStyle, style&^csDropShadow)
 	}
+}
+
+// subclassMenu subclasses a menu's window, being created, until it is
+// destroyed.
+func (b *Backend) subclassMenu(hwnd uintptr) {
+	if b.menuWindows[hwnd] != nil {
+		return
+	}
+	old, _, _ := procSetWindowLongPtrW.Call(hwnd, gwlpWndProc, menuProcCallback())
+	if old == 0 {
+		return
+	}
+	if b.menuWindows == nil {
+		b.menuWindows = map[uintptr]*menuWindow{}
+	}
+	b.menuWindows[hwnd] = &menuWindow{proc: old}
+}
+
+// menuProc is the window procedure of the menus' windows subclassMenu
+// subclassed. Before a window shows or paints, it dresses it for the menu
+// it shows; where the material is behind it, it paints its border
+// transparent rather than as Windows does.
+func menuProc(hwnd, m, wp, lp uintptr) uintptr {
+	b := theBackend
+	mw := b.menuWindows[hwnd]
+	if mw == nil {
+		r, _, _ := procDefWindowProcW.Call(hwnd, m, wp, lp)
+		return r
+	}
+	call := func() uintptr {
+		r, _, _ := procCallWindowProcW.Call(mw.proc, hwnd, m, wp, lp)
+		return r
+	}
+	switch uint32(m) {
+	case wmWindowPosChanging, wmEraseBkgnd, wmPaint, wmPrintClient:
+		b.dressMenu(hwnd, mw)
+	case wmNCPaint:
+		if b.dressMenu(hwnd, mw); mw.glass {
+			dc, _, _ := procGetWindowDC.Call(hwnd)
+			clearMenuBorder(hwnd, dc)
+			procReleaseDC.Call(hwnd, dc)
+			return 0
+		}
+	case wmPrint:
+		b.dressMenu(hwnd, mw)
+		r := call()
+		if mw.glass && lp&prfNonClient != 0 {
+			clearMenuBorder(hwnd, wp)
+		}
+		return r
+	case wmNCDestroy:
+		procSetWindowLongPtrW.Call(hwnd, gwlpWndProc, mw.proc)
+		delete(b.menuWindows, hwnd)
+	}
+	return call()
+}
+
+// dressMenu puts the material behind a menu's window, or takes it away,
+// for the menu it shows: one MyGo draws, while its menus show it
+// (menuGlass), rather than Windows' window menu. It does so once the
+// window says which menu it shows, before it draws it, and again only for
+// another menu.
+func (b *Backend) dressMenu(hwnd uintptr, mw *menuWindow) {
+	menu, _, _ := procSendMessageW.Call(hwnd, mnGetHMenu, 0, 0)
+	if menu == 0 || menu == mw.menu {
+		return
+	}
+	mw.menu = menu
+	draws := b.drawsMenu(menu)
+	if glass := b.menuGlass && draws; glass != mw.glass {
+		mw.glass = glass
+		setMenuGlass(hwnd, glass, b.isDark())
+	}
+	if draws {
+		b.setMenuBackground(menu)
+	}
+}
+
+// glassMenu reports whether a menu shows in a window with the material
+// behind it.
+func (b *Backend) glassMenu(menu uintptr) bool {
+	for _, mw := range b.menuWindows {
+		if mw.menu == menu && mw.glass {
+			return true
+		}
+	}
+	return false
+}
+
+// drawsMenu reports whether MyGo draws the items of a menu.
+func (b *Backend) drawsMenu(menu uintptr) bool {
+	for _, l := range b.menus.looks {
+		if l.menu == menu {
+			return true
+		}
+	}
+	return false
+}
+
+// setMenuGlass puts Acrylic behind a menu's window, in the appearance, the
+// frame extended over all of it, or takes it away (on false).
+func setMenuGlass(hwnd uintptr, on, dark bool) {
+	backdrop, m, d := int32(backdropAuto), margins{}, int32(0)
+	if on {
+		backdrop, m = backdropAcrylic, margins{-1, -1, -1, -1}
+		if dark {
+			d = 1
+		}
+	}
+	procDwmSetWindowAttribute.Call(hwnd, dwmwaUseImmersiveDarkMode, uintptr(unsafe.Pointer(&d)), 4)
+	procDwmExtendFrameIntoClientArea.Call(hwnd, uintptr(unsafe.Pointer(&m)))
+	procDwmSetWindowAttribute.Call(hwnd, dwmwaSystemBackdropType, uintptr(unsafe.Pointer(&backdrop)), 4)
+}
+
+// clearMenuBorder paints the border of a menu's window, around its
+// client area, black in dc, a DC of the whole window: transparent over
+// the material.
+func clearMenuBorder(hwnd, dc uintptr) {
+	if dc == 0 {
+		return
+	}
+	var win, client rect
+	procGetWindowRect.Call(hwnd, uintptr(unsafe.Pointer(&win)))
+	procGetClientRect.Call(hwnd, uintptr(unsafe.Pointer(&client)))
+	var origin point
+	procClientToScreen.Call(hwnd, uintptr(unsafe.Pointer(&origin)))
+	x, y := origin.X-win.Left, origin.Y-win.Top
+	if windowLong(hwnd, gwlExStyle)&wsExLayoutRTL != 0 {
+		// A mirrored window's DC counts from its right edge.
+		x = win.Right - origin.X
+	}
+	saved, _, _ := procSaveDC.Call(dc)
+	procExcludeClipRect.Call(dc, uintptr(x), uintptr(y), uintptr(x+client.Right), uintptr(y+client.Bottom))
+	all := rect{0, 0, win.Right - win.Left, win.Bottom - win.Top}
+	brush, _, _ := procGetStockObject.Call(blackBrush)
+	procFillRect.Call(dc, uintptr(unsafe.Pointer(&all)), brush)
+	procRestoreDC.Call(dc, saved)
 }

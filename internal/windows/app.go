@@ -92,11 +92,15 @@ type Backend struct {
 	// menuFonts are the fonts of the menu items MyGo draws by DPI,
 	// menuExtra how much Windows widens them by DPI, and menuBrushes the
 	// brushes of menus' backgrounds by color (menudraw.go).
-	menuFonts   map[int]menuFonts
+	menuFonts   map[menuFontKey]menuFonts
 	menuExtra   map[int]int32
 	menuBrushes map[uint32]uintptr
-	// menuHook hooks the main thread while menus show.
-	menuHook uintptr
+	// menuHook hooks the main thread while menus show, and menuGlass is
+	// whether they show the material behind them. menuWindows are the
+	// windows of menus it subclassed.
+	menuHook    uintptr
+	menuGlass   bool
+	menuWindows map[uintptr]*menuWindow
 	// comp shows the controls of windows with a material behind them
 	// (compositor.go). compRetry is when to try making it again after
 	// compFails failures in a row, and composeAt when timerCompose draws

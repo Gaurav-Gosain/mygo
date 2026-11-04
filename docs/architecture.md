@@ -676,8 +676,24 @@ features GTK 4 lacks become X11-only code beside it.
   menus show (`WM_ENTERMENULOOP` to `WM_EXITMENULOOP`, and around
   `TrackPopupMenuEx`, which creates its window before), a `WH_CALLWNDPROC`
   hook of the main thread rounds the windows of class `#32768` in their
-  `WM_CREATE` (`DWMWCP_ROUNDSMALL`, outlined in the colors of Windows'
-  menus) and takes the shadow off the class, for DWM's around the window.
+  `WM_CREATE` (`DWMWCP_ROUND`, WinUI's 8 pixels, outlined in the colors of
+  Windows' menus) and takes the shadow off the class, for DWM's around the
+  window. It also subclasses them: on Windows 11 22H2 with transparency
+  effects on and no contrast theme, a window that says (`MN_GETHMENU`,
+  before it shows or paints) that it shows a menu MyGo draws gets Acrylic
+  (`DWMSBT_TRANSIENTWINDOW`, in the appearance through
+  `DWMWA_USE_IMMERSIVE_DARK_MODE`) with the frame extended over all of
+  it; its background brush turns black, which DWM shows as transparent,
+  its border too (`WM_NCPAINT`, and `WM_PRINT` for animations), and GDI,
+  which knows nothing of alpha, draws each item twice, over black and
+  over white, from which the item's premultiplied pixels follow
+  (translucent highlights and separators, WinUI's fills; text in
+  grayscale, which has no background for ClearType). A window that shows
+  another menu, as Windows' window menu, stays as it is, and so do its
+  items. Tray menus open on Windows 11 as the system's do, centered on the
+  icon 12 DIPs from the taskbar (`ABM_GETTASKBARPOS`, aligned by
+  `TrackPopupMenuEx` and kept off the taskbar by its `rcExclude`), and at
+  the pointer on Windows 10 or for an icon not on the taskbar.
   The bar grows from `WM_UAHMEASUREMENUITEM` and its items get inset
   backplates with rounded corners. A contrast theme keeps the system's
   colors: the bar is Windows' again, the popup items take the system's.

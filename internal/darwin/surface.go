@@ -8,6 +8,7 @@ import (
 	pngenc "image/png"
 	"runtime"
 	"slices"
+	"strings"
 	"structs"
 	"sync"
 	"time"
@@ -643,13 +644,51 @@ func nsCursor(c platform.Cursor) id {
 	if !ok {
 		name = "arrowCursor"
 	}
-	if !respondsTo(cls, name) {
-		if name, ok = cursorFallbacks[c]; !ok || !respondsTo(cls, name) {
+	if !hasCursor(cls, name) {
+		if name, ok = cursorFallbacks[c]; !ok || !hasCursor(cls, name) {
 			name = "arrowCursor"
 		}
 	}
 	return send(cls, name)
 }
+
+// hasCursor reports whether NSCursor has the class method name. AppKit's
+// private cursors (named with a leading underscore) must be among the
+// methods NSCursor itself implements: NSCursor answers
+// respondsToSelector: for some it no longer has, as _moveCursor, and
+// sending one of those raises an exception that ends the app.
+func hasCursor(cls id, name string) bool {
+	if !strings.HasPrefix(name, "_") {
+		return respondsTo(cls, name)
+	}
+	ownCursorsOnce.Do(func() {
+		var copyMethods func(cls uintptr, n *uint32) unsafe.Pointer
+		var methodName func(m uintptr) objc.SEL
+		var getClass func(obj id) uintptr
+		var free func(p unsafe.Pointer)
+		purego.RegisterLibFunc(&copyMethods, libObjC, "class_copyMethodList")
+		purego.RegisterLibFunc(&methodName, libObjC, "method_getName")
+		purego.RegisterLibFunc(&getClass, libObjC, "object_getClass")
+		purego.RegisterLibFunc(&free, purego.RTLD_DEFAULT, "free")
+		var n uint32
+		list := copyMethods(getClass(cls), &n)
+		if list == nil {
+			return
+		}
+		ownCursors = map[objc.SEL]bool{}
+		for _, m := range unsafe.Slice((*uintptr)(list), n) {
+			ownCursors[methodName(m)] = true
+		}
+		free(list)
+	})
+	return ownCursors[sel(name)]
+}
+
+// ownCursors are the class methods NSCursor implements itself (hasCursor).
+var (
+	ownCursorsOnce sync.Once
+	ownCursors     map[objc.SEL]bool
+)
 
 var hiddenCursor id
 

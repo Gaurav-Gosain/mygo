@@ -243,6 +243,10 @@ type view struct {
 	searched SearchStatus
 	matches  []matchSpan
 	matchBuf []vt.Selection
+
+	// toldTop says OnNearTop was called for the view's top row toldAt.
+	toldTop bool
+	toldAt  uint64
 }
 
 type pendingKey struct {

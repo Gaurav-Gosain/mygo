@@ -139,11 +139,15 @@ func (v *view) paint(p *ui.Painter, r ui.Rect) {
 	v.scrollbar = t.term.Scrollbar()
 	contrast := t.opts.MinimumContrast
 	tc, tr := t.term.Size()
+	nearTop := v.nearTop(t, tr)
 	v.matches, v.matchBuf = t.viewportMatches(v.matches, v.matchBuf, tc, tr)
 	if !held {
 		v.readImages(t.term)
 	}
 	t.mu.Unlock()
+	if nearTop {
+		t.opts.OnNearTop()
+	}
 	rs := t.rs
 	if !held {
 		rs.EndUpdate()

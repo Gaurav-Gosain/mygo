@@ -267,6 +267,13 @@ type Options struct {
 	// whose history lives at the other end, as a remote multiplexer
 	// streaming only its screen.
 	OnScroll func(rows int) bool
+	// OnNearTop is called on the main thread when the view, scrolled into
+	// the scrollback, comes within a screen of its top, and again at each
+	// row it moves to there. A Conn whose history lives at the other end,
+	// as a server that sent only the last rows, can then fetch older rows
+	// and add them with PrependHistory, which moves the view out of reach
+	// of the top again. It must not block.
+	OnNearTop func()
 	// OnZoom sees a zoom, on the main thread: the wheel with Control held
 	// (Command on macOS), before OnScroll and a program that takes the
 	// mouse, or a key bound to a font size action. It reports whether it

@@ -581,12 +581,25 @@ var cursorSelectors = map[platform.Cursor]string{
 	platform.CursorCopy:         "dragCopyCursor",
 	platform.CursorAlias:        "dragLinkCursor",
 	platform.CursorContextMenu:  "contextualMenuCursor",
+	platform.CursorNoDrop:       "operationNotAllowedCursor",
+	// AppKit's own, which it keeps private, as WebKit uses them.
+	platform.CursorProgress:  "busyButClickableCursor",
+	platform.CursorWait:      "_waitCursor",
+	platform.CursorHelp:      "_helpCursor",
+	platform.CursorZoomIn:    "_zoomInCursor",
+	platform.CursorZoomOut:   "_zoomOutCursor",
+	platform.CursorAllScroll: "_moveCursor",
+	platform.CursorCell:      "_cellCursor",
 }
 
-// cursorFallbacks are the cursors of older macOS for those it lacks.
+// cursorFallbacks are the cursors of older macOS for those it lacks, and
+// the nearest public ones for the private ones that may go away.
 var cursorFallbacks = map[platform.Cursor]string{
 	platform.CursorResizeColumn: "resizeLeftRightCursor",
 	platform.CursorResizeRow:    "resizeUpDownCursor",
+	platform.CursorWait:         "busyButClickableCursor",
+	platform.CursorAllScroll:    "openHandCursor",
+	platform.CursorCell:         "crosshairCursor",
 }
 
 // applyCursor sets the content's cursor, unless the pointer is over a
@@ -631,7 +644,7 @@ func nsCursor(c platform.Cursor) id {
 		name = "arrowCursor"
 	}
 	if !respondsTo(cls, name) {
-		if name, ok = cursorFallbacks[c]; !ok {
+		if name, ok = cursorFallbacks[c]; !ok || !respondsTo(cls, name) {
 			name = "arrowCursor"
 		}
 	}
@@ -776,7 +789,37 @@ func swipeBack(deltaX float64) (back, ok bool) {
 
 func (s *surface) mouse(kind platform.SurfaceEventKind, ev id, button int) {
 	x, y := s.location(ev)
-	s.send(platform.SurfaceEvent{Kind: kind, X: x, Y: y, Button: button, Clicks: sendInt(ev, "clickCount"), Mods: eventMods(ev)})
+	pointer, pressure := mouseDevice(ev)
+	s.send(platform.SurfaceEvent{Kind: kind, X: x, Y: y, Button: button, Clicks: sendInt(ev, "clickCount"), Mods: eventMods(ev), Pointer: pointer, Pressure: pressure})
+}
+
+// mouseDevice returns the device of a mouse event, by its subtype, and its
+// pressure: a tablet's pen (NSEventSubtypeTabletPoint, or
+// TabletProximity as it comes near), whose pressure AppKit tells, or a
+// touch (NSEventSubtypeTouch). A mouse's pressure, 1 while a button is
+// down, and a Force Touch trackpad's, are left out: the content gives
+// devices without pressure Pointer Events' 0.5.
+func mouseDevice(ev id) (platform.PointerKind, float64) {
+	switch int16(sendInt(ev, "subtype")) {
+	case 1: // NSEventSubtypeTabletPoint
+		return platform.PointerPen, float64(msgFloat32(ev, sel("pressure")))
+	case 2: // NSEventSubtypeTabletProximity
+		return platform.PointerPen, 0
+	case 3: // NSEventSubtypeTouch
+		return platform.PointerTouch, 0
+	}
+	return platform.PointerMouse, 0
+}
+
+// tabletPoint sends a tablet's pen pressing harder or softer between its
+// moves, which AppKit sends as tablet events of their own (tabletPoint:),
+// as a move where the pointer is.
+func (s *surface) tabletPoint(ev id) {
+	p := msgPoint(class("NSEvent"), sel("mouseLocation"))
+	inWindow := msgRectToRect(s.w.win, sel("convertRectFromScreen:"), NSRect{Origin: p})
+	local := msgPointFromView(s.view, sel("convertPoint:fromView:"), inWindow.Origin, 0)
+	pressure := float64(msgFloat32(ev, sel("pressure")))
+	s.send(platform.SurfaceEvent{Kind: platform.PointerMove, X: local.X, Y: local.Y, Mods: eventMods(ev), Pointer: platform.PointerPen, Pressure: pressure})
 }
 
 // macKeys maps virtual key codes that do not type a character.
@@ -1099,6 +1142,11 @@ func registerSurfaceClass() {
 		method("otherMouseUp:", mouse(platform.PointerUp, 2)),
 		method("otherMouseDragged:", mouse(platform.PointerMove, 2)),
 		method("mouseMoved:", mouse(platform.PointerMove, 0)),
+		method("tabletPoint:", func(self id, _ objc.SEL, ev id) {
+			if s := b().surfaceOf(self); s != nil {
+				s.tabletPoint(ev)
+			}
+		}),
 		method("mouseEntered:", func(self id, _ objc.SEL, ev id) {
 			if s := b().surfaceOf(self); s != nil {
 				s.inside = true

@@ -1,0 +1,32 @@
+//go:build darwin
+
+package darwin
+
+import (
+	"testing"
+
+	"github.com/egoist/mygo/internal/platform"
+)
+
+// TestCursors gives every cursor an NSCursor: AppKit's own, a private
+// one, or the nearest public one where macOS lacks it.
+func TestCursors(t *testing.T) {
+	load()
+	withPool(func() {
+		arrow := send(class("NSCursor"), "arrowCursor")
+		for c := platform.CursorDefault; c <= platform.CursorNoDrop; c++ {
+			cur := nsCursor(c)
+			if cur == 0 {
+				t.Errorf("cursor %d: no NSCursor", c)
+			}
+			if c != platform.CursorDefault && cur == arrow {
+				t.Logf("cursor %d: the arrow (macOS has none of its own)", c)
+			}
+		}
+		for _, c := range []platform.Cursor{platform.CursorNoDrop, platform.CursorCell, platform.CursorAllScroll} {
+			if nsCursor(c) == arrow {
+				t.Errorf("cursor %d is the arrow, though its fallback is public", c)
+			}
+		}
+	})
+}

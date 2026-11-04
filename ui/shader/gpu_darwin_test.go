@@ -3,8 +3,8 @@ package shader
 import (
 	"testing"
 
-	"github.com/egoist/mygo/internal/gpu/gputest"
-	"github.com/egoist/mygo/internal/gpu/metal"
+	"github.com/Gaurav-Gosain/mygo/internal/gpu/gputest"
+	"github.com/Gaurav-Gosain/mygo/internal/gpu/metal"
 )
 
 // TestMetal checks that Metal draws a shader, its uniforms and its

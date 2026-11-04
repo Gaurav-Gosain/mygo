@@ -11,7 +11,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/egoist/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
 )
 
 // Mechanically checked against Microsoft's Microsoft.Web.WebView2 NuGet

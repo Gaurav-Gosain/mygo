@@ -7,10 +7,10 @@ import (
 	"math"
 	"testing"
 
-	"github.com/egoist/mygo/internal/raster"
-	"github.com/egoist/mygo/internal/scene"
-	"github.com/egoist/mygo/internal/shader"
-	"github.com/egoist/mygo/internal/shaderir"
+	"github.com/Gaurav-Gosain/mygo/internal/raster"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/shader"
+	"github.com/Gaurav-Gosain/mygo/internal/shaderir"
 )
 
 // testSource reads two images, one exactly and one sampled, and uniforms

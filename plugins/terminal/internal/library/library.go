@@ -13,8 +13,8 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/egoist/mygo"
-	fetch "github.com/egoist/mygo/internal/download"
+	"github.com/Gaurav-Gosain/mygo"
+	fetch "github.com/Gaurav-Gosain/mygo/internal/download"
 )
 
 // nativeLibraries is the format of mygo-plugin.json.

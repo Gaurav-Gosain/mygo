@@ -12,8 +12,8 @@ import (
 	"log"
 	"sync/atomic"
 
-	"github.com/egoist/mygo"
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 // frontend is the notes page, which the app serves: a page loaded from a

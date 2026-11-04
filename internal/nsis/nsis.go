@@ -15,7 +15,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/egoist/mygo/internal/download"
+	"github.com/Gaurav-Gosain/mygo/internal/download"
 )
 
 // Release is the NSIS that mygo build downloads: the official zip,

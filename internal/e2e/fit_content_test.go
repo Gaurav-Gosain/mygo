@@ -6,8 +6,8 @@ import (
 	"math"
 	"testing"
 
-	"github.com/egoist/mygo"
-	"github.com/egoist/mygo/internal/wait"
+	"github.com/Gaurav-Gosain/mygo"
+	"github.com/Gaurav-Gosain/mygo/internal/wait"
 )
 
 const fitPage = `<!doctype html><body style="margin:0;background:#fc0"><div id="d" style="width:120px;height:80px"></div></body>`

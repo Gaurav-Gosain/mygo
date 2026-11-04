@@ -12,7 +12,7 @@ import (
 	_ "golang.org/x/image/bmp"  // DecodeBitmap
 	_ "golang.org/x/image/webp" // DecodeBitmap
 
-	"github.com/egoist/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
 )
 
 // Bitmap is an image to show with Image. Create it once: converting an

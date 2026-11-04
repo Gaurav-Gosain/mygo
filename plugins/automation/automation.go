@@ -8,9 +8,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/egoist/mygo"
-	"github.com/egoist/mygo/internal/platform"
-	"github.com/egoist/mygo/internal/surface"
+	"github.com/Gaurav-Gosain/mygo"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/surface"
 )
 
 // init listens on the socket MYGO_AUTOMATION names, if any, before any

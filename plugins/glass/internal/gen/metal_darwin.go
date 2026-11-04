@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/egoist/mygo/internal/gpu/metal"
+	"github.com/Gaurav-Gosain/mygo/internal/gpu/metal"
 )
 
 // compile compiles the shader file within the Metal renderer's head and

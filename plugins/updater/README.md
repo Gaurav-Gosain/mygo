@@ -7,7 +7,7 @@ the user later, downloads it with a progress bar and relaunches the app into
 it. It is all Go, with no npm package.
 
 ```go
-import "github.com/egoist/mygo/plugins/updater"
+import "github.com/Gaurav-Gosain/mygo/plugins/updater"
 
 mygo.Use(updater.Plugin) // or updater.New(updater.Options{Interval: ..., Icon: ...})
 ```
@@ -24,7 +24,7 @@ and "Check for Updates…" in the app's menu:
 ```
 
 Apps whose windows all show native UI use `native.Plugin` (package
-`github.com/egoist/mygo/plugins/updater/native`) instead: the same window
+`github.com/Gaurav-Gosain/mygo/plugins/updater/native`) instead: the same window
 drawn in native UI, with no webview.
 
 It speaks the user's language (English, Chinese, Dutch, French, German,

@@ -21,7 +21,7 @@ import { mkdir, mkdtemp, readFile, readdir, rm, stat, writeFile } from "node:fs/
 import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
 
-const module = "github.com/egoist/mygo";
+const module = "github.com/Gaurav-Gosain/mygo";
 
 /** Values by unit, such as "ns/op", "B/op", "allocs/op" or "bytes". */
 export type Metrics = Record<string, number>;
@@ -252,7 +252,7 @@ async function measureApps(
     for (const app of apps) {
       if (!existsSync(join("examples", app))) continue;
       const bin = join(dir, goos === "windows" ? app + ".exe" : app);
-      const ldflags = "-s -w -X github.com/egoist/mygo.production=1" + (goos === "windows" ? " -H=windowsgui" : "");
+      const ldflags = "-s -w -X github.com/Gaurav-Gosain/mygo.production=1" + (goos === "windows" ? " -H=windowsgui" : "");
       output(["go", "build", "-trimpath", "-tags", "mygo_noinspector", "-ldflags", ldflags, "-o", bin, "./examples/" + app]);
       size[app] = { bytes: (await stat(bin)).size };
       bins.push(bin);

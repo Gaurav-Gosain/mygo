@@ -8,9 +8,9 @@ import (
 	"slices"
 	"sync"
 
-	"github.com/egoist/mygo"
-	"github.com/egoist/mygo/plugins/updater/internal/frontend"
-	"github.com/egoist/mygo/plugins/updater/internal/markdown"
+	"github.com/Gaurav-Gosain/mygo"
+	"github.com/Gaurav-Gosain/mygo/plugins/updater/internal/frontend"
+	"github.com/Gaurav-Gosain/mygo/plugins/updater/internal/markdown"
 )
 
 // session is a check for updates and what follows it: the update window,

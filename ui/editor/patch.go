@@ -3,7 +3,7 @@ package editor
 import (
 	"errors"
 	"fmt"
-	"github.com/egoist/mygo/internal/diff"
+	"github.com/Gaurav-Gosain/mygo/internal/diff"
 	"strconv"
 	"strings"
 )

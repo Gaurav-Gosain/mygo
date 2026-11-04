@@ -16,7 +16,7 @@ const { version } = require("./package.json");
 /** The platforms with a prebuilt binary, as `${process.platform}-${process.arch}`. */
 export const platforms = ["darwin-arm64", "darwin-x64", "linux-arm64", "linux-x64", "win32-arm64", "win32-x64"];
 
-const goInstall = `go install github.com/egoist/mygo/cmd/mygo@v${version}`;
+const goInstall = `go install github.com/Gaurav-Gosain/mygo/cmd/mygo@v${version}`;
 
 /**
  * Returns the name of the package holding the mygo binary of a platform,
@@ -105,7 +105,7 @@ function reinstallHint(pkg) {
 function isCheckout(dir) {
   try {
     return (
-      readFileSync(join(dir, "go.mod"), "utf8").startsWith("module github.com/egoist/mygo\n") &&
+      readFileSync(join(dir, "go.mod"), "utf8").startsWith("module github.com/Gaurav-Gosain/mygo\n") &&
       existsSync(join(dir, "cmd", "mygo", "main.go"))
     );
   } catch {

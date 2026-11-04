@@ -27,13 +27,13 @@ which `go tool mygo` runs at the version it pins.
 The CLI is a Go program, which Go runs too, without installing it:
 
 ```sh
-go run github.com/egoist/mygo/cmd/mygo@latest init my-app
+go run github.com/Gaurav-Gosain/mygo/cmd/mygo@latest init my-app
 ```
 
 `go install` puts `mygo` on your `PATH`:
 
 ```sh
-go install github.com/egoist/mygo/cmd/mygo@latest
+go install github.com/Gaurav-Gosain/mygo/cmd/mygo@latest
 ```
 
 Either way, building apps needs Go, which compiles them.

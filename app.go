@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/egoist/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
 )
 
 // ActivationPolicy controls how a macOS application appears in the Dock and

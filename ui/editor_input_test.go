@@ -8,8 +8,8 @@ import (
 	"unsafe"
 	"weak"
 
-	"github.com/egoist/mygo/internal/platform"
-	"github.com/egoist/mygo/internal/text"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/text"
 )
 
 func inputTester(value *string, multiline bool) *Tester {

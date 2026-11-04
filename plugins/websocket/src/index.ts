@@ -6,7 +6,7 @@
  * use the plugin:
  *
  * ```go
- * mygo.Use(websocket.Plugin) // github.com/egoist/mygo/plugins/websocket
+ * mygo.Use(websocket.Plugin) // github.com/Gaurav-Gosain/mygo/plugins/websocket
  * ```
  *
  * ```ts

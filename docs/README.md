@@ -164,7 +164,7 @@ components, from buttons to tables.
 
 - [Configuration](configuration.md): `mygo.config.ts`, or `mygo.json`.
 - [The mygo CLI](cli.md): its commands and flags.
-- The Go API: `go doc -all github.com/egoist/mygo`, with the documentation
+- The Go API: `go doc -all github.com/Gaurav-Gosain/mygo`, with the documentation
   of every type and method.
 - [Architecture](architecture.md): how MyGo works inside, for contributors,
   with a table of the differences between platforms.

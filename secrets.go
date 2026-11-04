@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/egoist/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
 )
 
 // SecretsModule keeps small secrets, such as access tokens and API keys,

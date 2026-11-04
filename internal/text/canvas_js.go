@@ -13,7 +13,7 @@ import (
 	"github.com/go-text/typesetting/bidi"
 	"github.com/go-text/typesetting/segmenter"
 
-	"github.com/egoist/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
 )
 
 // newEngine returns the canvas engine, or where there is no canvas to

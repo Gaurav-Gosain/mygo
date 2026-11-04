@@ -1,10 +1,10 @@
 package shader
 
 import (
-	"github.com/egoist/mygo/internal/gpu/metal"
-	"github.com/egoist/mygo/internal/scene"
-	"github.com/egoist/mygo/internal/shaderir"
-	"github.com/egoist/mygo/internal/shaderir/msl"
+	"github.com/Gaurav-Gosain/mygo/internal/gpu/metal"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/shaderir"
+	"github.com/Gaurav-Gosain/mygo/internal/shaderir/msl"
 )
 
 // code gives fx p's code for the Metal renderer, and returns where the

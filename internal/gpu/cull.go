@@ -3,7 +3,7 @@ package gpu
 import (
 	"math"
 
-	"github.com/egoist/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
 )
 
 // Occlusion culling. A later opaque fill replaces what the ops before it

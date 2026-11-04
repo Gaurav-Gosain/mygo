@@ -12,8 +12,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/egoist/mygo/internal/fake"
-	"github.com/egoist/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/fake"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
 )
 
 // The benchmarks measure the Go side of IPC and custom schemes on the fake

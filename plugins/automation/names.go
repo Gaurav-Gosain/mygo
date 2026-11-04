@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/egoist/mygo/internal/accelerator"
-	"github.com/egoist/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/accelerator"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
 )
 
 // roleNames are the names of platform.AccessRole's roles, in their order.

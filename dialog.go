@@ -3,7 +3,7 @@ package mygo
 import (
 	"strings"
 
-	"github.com/egoist/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
 )
 
 // DialogModule shows native dialogs. Its methods block until the dialog is

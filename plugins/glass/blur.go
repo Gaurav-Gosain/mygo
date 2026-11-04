@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/egoist/mygo/internal/scene"
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 // Blur is a backdrop blur, a ui.Material: what was painted under the

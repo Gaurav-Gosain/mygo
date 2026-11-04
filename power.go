@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/egoist/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
 )
 
 // PowerModule reports power and session changes and keeps the computer

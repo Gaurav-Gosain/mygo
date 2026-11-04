@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/egoist/mygo/ui"
-	"github.com/egoist/mygo/ui/richtext"
+	"github.com/Gaurav-Gosain/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/ui/richtext"
 )
 
 // sampleNote is the text the Rich Text page starts with.

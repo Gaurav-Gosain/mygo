@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/egoist/mygo/transfer"
-	"github.com/egoist/mygo/ui"
-	"github.com/egoist/mygo/ui/markdown"
+	"github.com/Gaurav-Gosain/mygo/transfer"
+	"github.com/Gaurav-Gosain/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/ui/markdown"
 )
 
 // dump writes the paragraphs of t, their styles and runs, to compare.

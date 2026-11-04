@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 // Tests don't press keys, which would sound on the machine running them.

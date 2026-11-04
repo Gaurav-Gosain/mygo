@@ -527,6 +527,11 @@ type Terminal struct {
 	prep    *prepending
 	pmu     sync.Mutex
 	rebuilt bool
+	// prepended is about how many bytes of scrollback the rows
+	// PrependHistory added take: the emulators it builds keep them on top
+	// of Options.Scrollback, so that the limit does not let go of the rows
+	// just asked for. Written under t.mu and pmu.
+	prepended int
 	// mirrors are the terminal's Mirrors, each of which passes on what
 	// programs copy.
 	mirrors []*Mirror
@@ -751,9 +756,9 @@ func (t *Terminal) newVT(cols, rows int, quiet *quietVT) (*vt.Terminal, error) {
 	case opts.Scrollback < 0:
 		term.SetScrollback(0)
 	case opts.Scrollback > 0:
-		term.SetScrollback(opts.Scrollback)
+		term.SetScrollback(opts.Scrollback + t.prepended)
 	default:
-		term.SetScrollback(10 << 20)
+		term.SetScrollback(10<<20 + t.prepended)
 	}
 	term.SetDefaultCursor(vtCursor(opts.Cursor), !opts.NoBlink)
 	if runtime.GOOS == "windows" && opts.Conn == nil {

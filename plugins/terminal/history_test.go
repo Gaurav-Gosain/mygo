@@ -334,6 +334,9 @@ func TestPrependHistoryPastLimit(t *testing.T) {
 	term.Feed([]byte(recent.String()))
 	full := total()
 	t.Logf("a full scrollback holds %d rows", full)
+	if _, rows := term.Size(); term.HistoryRows() != full-rows {
+		t.Fatalf("HistoryRows %d, want %d", term.HistoryRows(), full-rows)
+	}
 	if full >= 20000 {
 		t.Fatalf("the limit kept all %d rows: the test needs a full scrollback", full)
 	}

@@ -1,7 +1,7 @@
 package terminal
 
 import (
-	"runtime"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -45,6 +45,12 @@ func TestTouchpadScrollsByPixels(t *testing.T) {
 	tt.Advance(100 * time.Millisecond)
 	if off, pull := at(); off != bottom || pull != ch/2 {
 		t.Errorf("half a row up: offset %d, pull %v; want %d, %v", off, pull, bottom, ch/2)
+	}
+	// A paint for something else, as the cursor's blink, leaves the
+	// content where it is, at the bottom too.
+	tt.Advance(2 * blinkPeriod)
+	if off, pull := at(); off != bottom || pull != ch/2 {
+		t.Errorf("half a row up, past a blink: offset %d, pull %v; want %d, %v", off, pull, bottom, ch/2)
 	}
 	tt.Scroll(100, 100, 0, -ch)
 	tt.Advance(100 * time.Millisecond)
@@ -102,36 +108,8 @@ func TestNotchGlides(t *testing.T) {
 	}
 }
 
-// TestFlickGoesOn: on Linux, a touchpad's flick goes on after the fingers
-// lift, which GTK tells with a scroll without distance, slowing until it
-// stops; elsewhere the system sends the momentum itself.
-func TestFlickGoesOn(t *testing.T) {
-	term, tt, at, _ := scrolled(t)
-	bottom, _ := at()
-	for range 10 {
-		tt.Scroll(100, 100, 0, -16) // 2000 DIPs a second
-		tt.Advance(8 * time.Millisecond)
-	}
-	lifted, _ := at()
-	tt.Wheel(100, 100, 0, 0) // the fingers lift
-	tt.Advance(2 * time.Second)
-	off, _ := at()
-	if runtime.GOOS != "linux" {
-		if off != lifted && off+1 != lifted {
-			t.Errorf("without momentum: offset %d after lifting at %d", off, lifted)
-		}
-		return
-	}
-	if off+5 > lifted {
-		t.Errorf("the flick stopped as the fingers lifted: offset %d, %d at the lift, %d at the bottom", off, lifted, bottom)
-	}
-	if term.v.smooth.moving() {
-		t.Error("the flick still moves after 2 s")
-	}
-}
-
-// TestTypingStopsTheScroll: a key typed during a flick goes back to the
-// bottom and stays there.
+// TestTypingStopsTheScroll: a key typed while the scrollback moves goes
+// back to the bottom and stays there.
 func TestTypingStopsTheScroll(t *testing.T) {
 	_, tt, at, _ := scrolled(t)
 	bottom, _ := at()
@@ -139,11 +117,85 @@ func TestTypingStopsTheScroll(t *testing.T) {
 		tt.Scroll(100, 100, 0, -16)
 		tt.Advance(8 * time.Millisecond)
 	}
-	tt.Wheel(100, 100, 0, 0)
-	tt.Advance(50 * time.Millisecond)
+	tt.Wheel(100, 100, 0, -hostNotch()) // and a notch, still gliding
+	tt.Advance(notchGlide / 4)
 	tt.Type("x")
 	tt.Advance(time.Second)
 	if off, pull := at(); off != bottom || pull != 0 {
 		t.Errorf("after typing: offset %d, pull %v; want %d, 0", off, pull, bottom)
+	}
+}
+
+// TestPressWhilePulled: a press lands on the row drawn under it while the
+// content is pulled down part of a row, also in the lower part of a row,
+// which the pull moves over the top of the next row's cell.
+func TestPressWhilePulled(t *testing.T) {
+	term, tt, at, ch := scrolled(t)
+	bottom, _ := at()
+	tt.Scroll(100, 100, 0, -ch/2)
+	tt.Advance(100 * time.Millisecond)
+	if off, pull := at(); off != bottom || pull != ch/2 {
+		t.Fatalf("half a row up: offset %d, pull %v; want %d, %v", off, pull, bottom, ch/2)
+	}
+	// Row 2 is drawn half a row lower: the lower part of it is where row
+	// 3's cell is without the pull.
+	x0, y := cellCenter(term, 0, 2)
+	y += ch * 0.8 // 0.8 of the way down row 2 as drawn
+	x1, _ := cellCenter(term, 7, 2)
+	tt.Press(x0-2, y)
+	// The press settles the content on its rows, half a row up: the drag
+	// follows row 2 there.
+	if off, pull := at(); off != bottom || pull != 0 {
+		t.Errorf("after the press: offset %d, pull %v; want %d, 0", off, pull, bottom)
+	}
+	y -= ch / 2
+	tt.Move(x1+2, y)
+	tt.Release(x1+2, y)
+	tt.Command("copy")
+	// The viewport's top row is line bottom (its offset), row 2 two past.
+	wantLine := "line " + itoa(int(bottom)+2)
+	if got := strings.TrimSpace(tt.Clipboard()); got != wantLine {
+		t.Errorf("pressed in the lower part of row 2 while pulled half a row: copied %q, want %q", got, wantLine)
+	}
+}
+
+// TestPulledPaintKeepsRows: a paint while the content is pulled and at
+// rest rebuilds no row, though each paint copies the row above the
+// viewport by moving the viewport a row up and back: above the bottom,
+// and at it, where the cursor shows.
+func TestPulledPaintKeepsRows(t *testing.T) {
+	for _, rows := range []float32{0.5, 2.5} {
+		t.Run(fmt.Sprint(rows), func(t *testing.T) { pulledPaint(t, rows) })
+	}
+}
+
+func pulledPaint(t *testing.T, rows float32) {
+	term, tt, at, ch := scrolled(t)
+	tt.Scroll(100, 100, 0, -ch*rows)
+	tt.Advance(100 * time.Millisecond)
+	if _, pull := at(); pull != ch/2 {
+		t.Fatalf("pull %v, want %v", pull, ch/2)
+	}
+	built := func() (int, int) {
+		term.mu.Lock()
+		defer term.mu.Unlock()
+		return term.v.rowsBuilt, term.v.paints
+	}
+	for i := range 3 {
+		rows, paints := built()
+		tt.Advance(blinkPeriod) // the cursor blinks: a paint, nothing else
+		r, p := built()
+		if p == paints {
+			t.Fatalf("no paint in a blink period")
+		}
+		term.mu.Lock()
+		pulled, above := term.v.pull, term.v.aboveOK
+		term.mu.Unlock()
+		if pulled != ch/2 || !above {
+			t.Errorf("blink %d: pull %v, row above drawn %v; want %v, true", i, pulled, above, ch/2)
+		}
+		if n := r - rows; n != 0 {
+			t.Errorf("blink %d at rest while pulled rebuilt %d rows in %d paints, want 0", i, n, p-paints)
+		}
 	}
 }

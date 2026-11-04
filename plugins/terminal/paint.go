@@ -111,6 +111,7 @@ const asciiPrintable = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUV
 // paint updates the rows that changed and draws the terminal.
 func (v *view) paint(p *ui.Painter, r ui.Rect) {
 	t := v.t
+	v.paints++
 	v.layout(r, p.Scale())
 	bg := v.theme.Background
 	t.mu.Lock()
@@ -307,6 +308,7 @@ func contrast(a, b float32) float32 {
 
 // buildRow makes the cache of the render state's current row.
 func (v *view) buildRow(line *rowCache, rs *vt.RenderState, cols int) {
+	v.rowsBuilt++
 	*line = rowCache{ok: true, bgs: line.bgs[:0], runs: line.runs[:0], decos: line.decos[:0], boxes: line.boxes[:0], wide: line.wide[:0], holders: line.holders[:0], filled: true}
 	cells := rs.RowCells()
 	line.selA, line.selB, line.sel = rs.RowSelection()

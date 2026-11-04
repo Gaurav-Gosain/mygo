@@ -2,7 +2,6 @@ package terminal
 
 import (
 	"math"
-	"runtime"
 	"time"
 
 	"github.com/egoist/mygo/plugins/terminal/internal/vt"
@@ -20,10 +19,10 @@ import (
 //   - A wheel's notch glides over notchGlide, easing out, as browsers and
 //     ui's scroll containers scroll notches; at once while the desktop asks
 //     for less motion.
-//   - On Linux, where GTK sends no momentum of its own, a flick goes on
-//     after the fingers lift (the event without distance GTK sends then),
-//     slowing down, as GTK's own scrolled windows do. macOS sends its
-//     momentum as more moves, which are resampled as any others.
+//
+// The view adds no momentum of its own, as ui's scroll containers add
+// none: where the system sends momentum, as macOS does, it comes as more
+// moves, which are resampled as any others.
 //
 // Whole rows move the emulator's viewport; the rest is pull, how far the
 // content is pulled down past the viewport's top row, which shows part of
@@ -40,11 +39,6 @@ type smoothScroll struct {
 	glideFrom, glideTo float64
 	glideAt            time.Time
 	gliding            bool
-	// A flick's momentum: its speed in DIPs a second at flingAt, from
-	// flingFrom.
-	flingV, flingFrom float64
-	flingAt           time.Time
-	flinging          bool
 	// easedAt is when the content last moved, for its ease to the last
 	// move.
 	easedAt time.Time
@@ -61,21 +55,15 @@ const (
 	resampleLag = 9 * time.Millisecond
 	// notchGlide is how long a wheel's notch glides.
 	notchGlide = 150 * time.Millisecond
-	// flingDecay is how fast a flick slows, per second: its speed falls to
-	// 1/e in 1/flingDecay seconds, and it goes v/flingDecay in all.
-	flingDecay = 4.0
 	// fitWindow is how far back the moves resample goes through reach,
 	// and easeTime how fast the content catches up once they stop.
 	fitWindow = 50 * time.Millisecond
 	easeTime  = 12 * time.Millisecond
-	// flingMin is the least speed, in DIPs a second, a flick goes on at,
-	// and flingStop the speed it stops at.
-	flingMin, flingStop = 250.0, 30.0
 )
 
 // moving reports whether the content has somewhere to go.
 func (s *smoothScroll) moving() bool {
-	return s.shown != s.target || s.gliding || s.flinging
+	return s.shown != s.target || s.gliding
 }
 
 // stop ends the motion where the content shows.
@@ -83,7 +71,7 @@ func (s *smoothScroll) stop() { *s = smoothScroll{} }
 
 // precise takes a touchpad's move of dy at now.
 func (s *smoothScroll) precise(now time.Time, dy float64) {
-	s.flinging, s.gliding = false, false
+	s.gliding = false
 	s.target += dy
 	if s.n == len(s.samples) {
 		copy(s.samples[:], s.samples[1:])
@@ -95,7 +83,7 @@ func (s *smoothScroll) precise(now time.Time, dy float64) {
 
 // notch takes a wheel's notch of dy at now, which glides unless still.
 func (s *smoothScroll) notch(now time.Time, dy float64, still bool) {
-	s.flinging, s.n = false, 0
+	s.n = 0
 	from := s.at(now)
 	s.target += dy
 	if still {
@@ -106,46 +94,10 @@ func (s *smoothScroll) notch(now time.Time, dy float64, still bool) {
 	s.shown = from
 }
 
-// lift ends a touchpad gesture at now: a flick goes on, on Linux.
-func (s *smoothScroll) lift(now time.Time) {
-	if runtime.GOOS != "linux" || s.n < 2 {
-		return
-	}
-	last := s.samples[s.n-1]
-	if now.Sub(last.at) > 60*time.Millisecond {
-		return // the fingers rested before they lifted
-	}
-	first := last
-	for i := s.n - 2; i >= 0 && last.at.Sub(s.samples[i].at) <= 100*time.Millisecond; i-- {
-		first = s.samples[i]
-	}
-	dt := last.at.Sub(first.at).Seconds()
-	if dt < 0.02 {
-		return
-	}
-	v := (last.to - first.to) / dt
-	if math.Abs(v) < flingMin {
-		return
-	}
-	// The content goes on from where it shows, at most resampleLag behind
-	// the fingers.
-	s.n = 0
-	s.target = s.shown
-	s.flingV, s.flingFrom, s.flingAt, s.flinging = v, s.shown, now, true
-}
-
-// at returns where the content goes at now: along a fling or a glide, or
-// resampled from the touchpad's moves.
+// at returns where the content goes at now: along a glide, or resampled
+// from the touchpad's moves.
 func (s *smoothScroll) at(now time.Time) float64 {
 	switch {
-	case s.flinging:
-		t := now.Sub(s.flingAt).Seconds()
-		decay := math.Exp(-flingDecay * t)
-		s.target = s.flingFrom + s.flingV/flingDecay*(1-decay)
-		if math.Abs(s.flingV*decay) < flingStop {
-			s.flinging = false
-		}
-		return s.target
 	case s.gliding:
 		k := float64(now.Sub(s.glideAt)) / float64(notchGlide)
 		if k >= 1 {
@@ -197,7 +149,7 @@ func (s *smoothScroll) advance(now time.Time) float64 {
 	to := s.at(now)
 	d := to - s.shown
 	s.shown = to
-	if math.Abs(s.target-s.shown) < 0.05 && !s.gliding && !s.flinging {
+	if math.Abs(s.target-s.shown) < 0.05 && !s.gliding {
 		s.shown = s.target // an ease's tail, under a pixel
 	}
 	s.easedAt = now
@@ -242,7 +194,7 @@ func (v *view) scrollPixels(term *vt.Terminal, d float32) bool {
 		v.pull = 0
 		return d > 0
 	}
-	v.pull = rest
+	v.pull, v.pullBottom = rest, term.AtBottom()
 	return true
 }
 
@@ -250,14 +202,19 @@ func (v *view) scrollPixels(term *vt.Terminal, d float32) bool {
 // and reports whether it goes on moving. t.mu is held.
 func (v *view) stepScroll(term *vt.Terminal, now time.Time) bool {
 	if !v.smooth.moving() {
-		if term.AtBottom() || term.AltScreen() {
+		// At rest the pull stays where the input left it, also at the
+		// bottom as output comes or the cursor blinks. It goes with the
+		// alternate screen, which has no scrollback, and when something
+		// else (a paste, a Mirror) put the viewport at the bottom from
+		// above it, or left nothing above it to show.
+		if v.pull != 0 && (term.AltScreen() || term.AtBottom() && !v.pullBottom || term.Scrollbar().Offset == 0) {
 			v.pull = 0
 		}
 		return false
 	}
 	d := v.smooth.advance(now)
 	if d != 0 && !v.scrollPixels(term, float32(d)) {
-		// At an end: the rest of a glide or a fling goes.
+		// At an end: the rest of a glide goes.
 		v.smooth.stop()
 		return false
 	}

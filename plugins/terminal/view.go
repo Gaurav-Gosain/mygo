@@ -323,12 +323,16 @@ func (v *view) build(c *ui.Context, e ui.Element) {
 	term := t.term
 	searching := term != nil && t.find.drive(term)
 	searched := t.find.status
+	nearTop := term != nil && v.nearTop(t)
 	t.mu.Unlock()
 	if searched != v.searched {
 		v.searched = searched
 		if t.opts.OnSearch != nil {
 			t.opts.OnSearch(searched)
 		}
+	}
+	if nearTop {
+		t.opts.OnNearTop()
 	}
 	if searching {
 		// The rest of the scrollback, in the frames to come.

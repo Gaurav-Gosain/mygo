@@ -19,7 +19,7 @@ package hlsl
 import (
 	"fmt"
 
-	"github.com/egoist/mygo/internal/shaderir"
+	"github.com/Gaurav-Gosain/mygo/internal/shaderir"
 )
 
 func opString(op shaderir.Op) string {

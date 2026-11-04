@@ -9,9 +9,9 @@ import (
 	"syscall/js"
 	"unicode/utf8"
 
-	"github.com/egoist/mygo/internal/gpu/gl"
-	"github.com/egoist/mygo/internal/platform"
-	"github.com/egoist/mygo/transfer"
+	"github.com/Gaurav-Gosain/mygo/internal/gpu/gl"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/transfer"
 )
 
 // surface is the canvas of a window, drawn with WebGL 2, or in memory and

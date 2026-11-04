@@ -11,7 +11,7 @@ the GPU or the CPU, so they look the same on macOS, Windows and Linux. It
 is all Go: no JavaScript package, and nothing to `mygo.Use`.
 
 ```go
-import "github.com/egoist/mygo/plugins/glass"
+import "github.com/Gaurav-Gosain/mygo/plugins/glass"
 
 ui.Row(c).Padding(8, 16).Gap(8).Radius(22).Material(glass.Glass{}).Children(func() {
 	ui.Text(c, "On glass")

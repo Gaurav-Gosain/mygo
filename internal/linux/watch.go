@@ -10,8 +10,8 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/egoist/mygo/internal/platform"
-	"github.com/egoist/mygo/internal/watchdriver"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/watchdriver"
 )
 
 // inotifyUser is a target of a watch sharing an inotify watch descriptor.

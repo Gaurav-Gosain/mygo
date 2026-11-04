@@ -5,8 +5,8 @@ import (
 	"unicode/utf16"
 	"unicode/utf8"
 
-	"github.com/egoist/mygo/internal/rope"
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/internal/rope"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 // The editor is the client of the system's input methods: they read the

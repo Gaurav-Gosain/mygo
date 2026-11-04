@@ -11,8 +11,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/egoist/mygo/internal/bridge"
-	"github.com/egoist/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/bridge"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
 )
 
 // What windows say to the bridge in their pages, and what they hear from

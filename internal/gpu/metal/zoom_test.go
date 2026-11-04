@@ -5,7 +5,7 @@ package metal
 import (
 	"testing"
 
-	"github.com/egoist/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
 )
 
 // TestZoomedFrames renders the frames of content zoomed 2 times on a

@@ -6,7 +6,7 @@ import (
 	"math"
 	"testing"
 
-	"github.com/egoist/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
 )
 
 // TestGlyphProbeJoinedEdges checks that batches joining small rounded

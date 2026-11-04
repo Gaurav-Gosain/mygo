@@ -14,8 +14,8 @@ shown [below](#from-go-or-native-ui).
 
 ```go
 import (
-    "github.com/egoist/mygo"
-    "github.com/egoist/mygo/plugins/sqlite"
+    "github.com/Gaurav-Gosain/mygo"
+    "github.com/Gaurav-Gosain/mygo/plugins/sqlite"
 )
 
 func main() {

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/egoist/mygo/internal/accelerator"
-	"github.com/egoist/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/accelerator"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
 )
 
 // menuEntry is a native menu item: WM_COMMAND reports 16-bit command ids,

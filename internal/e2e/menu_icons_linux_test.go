@@ -6,9 +6,9 @@ import (
 	"image/color"
 	"testing"
 
-	"github.com/egoist/mygo"
-	"github.com/egoist/mygo/internal/linux"
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo"
+	"github.com/Gaurav-Gosain/mygo/internal/linux"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 // Menu items show icons beside their labels, with their checks, and change

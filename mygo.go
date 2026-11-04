@@ -2,7 +2,7 @@
 // without cgo. Each window shows a web page, in the system webview
 // (WKWebView on macOS, WebKitGTK on Linux, WebView2 on Windows), or native
 // UI that MyGo draws itself, written in Go with package
-// [github.com/egoist/mygo/ui]; one app can have windows of both kinds.
+// [github.com/Gaurav-Gosain/mygo/ui]; one app can have windows of both kinds.
 //
 // A window with a web page shows the app's frontend, which calls the Go
 // services the app binds through a TypeScript client that `mygo generate`
@@ -63,7 +63,7 @@ import (
 	"runtime"
 	"sync"
 
-	"github.com/egoist/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
 )
 
 // Version is the MyGo version.

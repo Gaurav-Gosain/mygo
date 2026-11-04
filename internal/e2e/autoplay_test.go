@@ -11,8 +11,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/egoist/mygo"
-	"github.com/egoist/mygo/internal/wait"
+	"github.com/Gaurav-Gosain/mygo"
+	"github.com/Gaurav-Gosain/mygo/internal/wait"
 )
 
 // autoplayPage plays 30 seconds of silence, unmuted, as soon as it loads,

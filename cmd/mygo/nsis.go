@@ -14,8 +14,8 @@ import (
 	"strings"
 	"time"
 
-	fetch "github.com/egoist/mygo/internal/download"
-	"github.com/egoist/mygo/internal/nsis"
+	fetch "github.com/Gaurav-Gosain/mygo/internal/download"
+	"github.com/Gaurav-Gosain/mygo/internal/nsis"
 )
 
 // The Windows installer is built with NSIS: a per-user install in

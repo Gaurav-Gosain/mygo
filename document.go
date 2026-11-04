@@ -3,7 +3,7 @@ package mygo
 import (
 	"errors"
 	"fmt"
-	"github.com/egoist/mygo/internal/l10n"
+	"github.com/Gaurav-Gosain/mygo/internal/l10n"
 	"io"
 	"os"
 	"path/filepath"

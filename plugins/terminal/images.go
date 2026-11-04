@@ -4,8 +4,8 @@ import (
 	"image"
 	"slices"
 
-	"github.com/egoist/mygo/plugins/terminal/internal/vt"
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/plugins/terminal/internal/vt"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 // Layers of images (Kitty graphics), as Ghostty draws them, by their z.

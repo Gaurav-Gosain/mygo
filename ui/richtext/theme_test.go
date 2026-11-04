@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 // TestThemeResolve checks that what a theme leaves zero takes the

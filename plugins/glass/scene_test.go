@@ -4,8 +4,8 @@ import (
 	"math"
 	"testing"
 
-	"github.com/egoist/mygo/internal/raster"
-	"github.com/egoist/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/raster"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
 )
 
 // paneOp appends a pane of glass of material m to s.

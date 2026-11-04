@@ -39,10 +39,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/egoist/mygo/plugins/terminal/internal/pty"
-	"github.com/egoist/mygo/plugins/terminal/internal/vt"
-	"github.com/egoist/mygo/transfer"
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/plugins/terminal/internal/pty"
+	"github.com/Gaurav-Gosain/mygo/plugins/terminal/internal/vt"
+	"github.com/Gaurav-Gosain/mygo/transfer"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 // Padding is the room around a terminal's grid, in DIPs (Options.Padding).

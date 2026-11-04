@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/egoist/mygo/i18n"
-	"github.com/egoist/mygo/internal/text"
+	"github.com/Gaurav-Gosain/mygo/i18n"
+	"github.com/Gaurav-Gosain/mygo/internal/text"
 )
 
 // TestLang holds the language of text to the language the app shows,

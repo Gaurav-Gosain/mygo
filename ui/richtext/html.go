@@ -10,7 +10,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/ui"
 	xhtml "golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
 )

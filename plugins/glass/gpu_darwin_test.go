@@ -3,9 +3,9 @@ package glass
 import (
 	"testing"
 
-	"github.com/egoist/mygo/internal/gpu"
-	"github.com/egoist/mygo/internal/gpu/gputest"
-	"github.com/egoist/mygo/internal/gpu/metal"
+	"github.com/Gaurav-Gosain/mygo/internal/gpu"
+	"github.com/Gaurav-Gosain/mygo/internal/gpu/gputest"
+	"github.com/Gaurav-Gosain/mygo/internal/gpu/metal"
 )
 
 // TestMetal checks that Metal draws the glass as the CPU does.

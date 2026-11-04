@@ -27,7 +27,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/egoist/mygo/internal/shaderir"
+	"github.com/Gaurav-Gosain/mygo/internal/shaderir"
 )
 
 type variable struct {

@@ -4,7 +4,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/egoist/mygo/internal/text"
+	"github.com/Gaurav-Gosain/mygo/internal/text"
 )
 
 // editorSelection stores only offsets and visual edges, independent of the

@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/egoist/mygo"
+	"github.com/Gaurav-Gosain/mygo"
 )
 
 // TestNowPlayingMPRIS drives the app's MPRIS player as the desktop's

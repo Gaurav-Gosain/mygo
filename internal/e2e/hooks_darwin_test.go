@@ -8,9 +8,9 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/egoist/mygo"
-	"github.com/egoist/mygo/internal/darwin"
-	"github.com/egoist/mygo/internal/wait"
+	"github.com/Gaurav-Gosain/mygo"
+	"github.com/Gaurav-Gosain/mygo/internal/darwin"
+	"github.com/Gaurav-Gosain/mygo/internal/wait"
 )
 
 // recentDocumentRecorded reports whether path is among the app's recent

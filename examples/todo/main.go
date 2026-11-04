@@ -9,7 +9,7 @@ package main
 import (
 	"log"
 
-	"github.com/egoist/mygo"
+	"github.com/Gaurav-Gosain/mygo"
 )
 
 func main() {

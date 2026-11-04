@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/egoist/mygo"
+	"github.com/Gaurav-Gosain/mygo"
 )
 
 // TestInstalledApps lists the installed apps, sorted, with names, IDs and

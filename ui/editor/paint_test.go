@@ -3,7 +3,7 @@ package editor
 import (
 	"testing"
 
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 // A deletion bar's stripes keep to the content: those of lines whose

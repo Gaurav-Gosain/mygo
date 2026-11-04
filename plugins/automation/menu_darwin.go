@@ -3,8 +3,8 @@
 package automation
 
 import (
-	"github.com/egoist/mygo"
-	"github.com/egoist/mygo/internal/darwin"
+	"github.com/Gaurav-Gosain/mygo"
+	"github.com/Gaurav-Gosain/mygo/internal/darwin"
 )
 
 // chooseMenuItem chooses an item of the application menu by the titles

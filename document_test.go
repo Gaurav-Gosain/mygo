@@ -16,11 +16,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/egoist/mygo/internal/l10n"
-	"github.com/egoist/mygo/internal/wait"
+	"github.com/Gaurav-Gosain/mygo/internal/l10n"
+	"github.com/Gaurav-Gosain/mygo/internal/wait"
 
-	"github.com/egoist/mygo/internal/fake"
-	"github.com/egoist/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/fake"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
 )
 
 // testDocs makes documents of plain text, .txt, in their own user data,

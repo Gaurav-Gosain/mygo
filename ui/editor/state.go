@@ -3,7 +3,7 @@ package editor
 import (
 	"slices"
 
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 // State is a code editor's state, kept by the app across

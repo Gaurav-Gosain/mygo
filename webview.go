@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/egoist/mygo/internal/platform"
-	"github.com/egoist/mygo/internal/surface"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/surface"
 )
 
 // WebView is a web page inside a window's native UI, which the window's

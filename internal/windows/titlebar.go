@@ -9,8 +9,8 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/egoist/mygo/internal/bridge"
-	"github.com/egoist/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/bridge"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
 )
 
 // A window with a hidden title bar has no caption: the page fills the

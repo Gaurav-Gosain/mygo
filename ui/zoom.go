@@ -3,7 +3,7 @@ package ui
 import (
 	"math"
 
-	"github.com/egoist/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
 )
 
 // The zooms SetZoom takes; others are clamped to them.

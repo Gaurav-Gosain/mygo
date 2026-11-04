@@ -6,8 +6,8 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/egoist/mygo/internal/gpu/gl"
-	"github.com/egoist/mygo/internal/gpu/gputest"
+	"github.com/Gaurav-Gosain/mygo/internal/gpu/gl"
+	"github.com/Gaurav-Gosain/mygo/internal/gpu/gputest"
 )
 
 func TestStrokePolylineGPU(t *testing.T) {

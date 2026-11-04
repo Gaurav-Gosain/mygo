@@ -1293,7 +1293,7 @@ func (rt *engine) commitElement(e *node, clip Rect, hidden bool) {
 	s.accessHidden = e.accessHidden || e.flags&flagInert != 0 || e.parent != nil && e.parent.st.accessHidden
 	s.cursor, s.tip = e.cursor, e.tip
 	s.webView = e.webView
-	s.role = e.role
+	s.role, s.focusHighlights = e.role, e.focusHighlights
 	s.input, s.caret, s.takesText, s.noIME = e.inputFn, e.caret, e.takesText, e.noIME
 	s.copyData = e.copyData
 	if s.textClient != e.textClient {

@@ -199,6 +199,9 @@ type surface struct {
 	// (webview.go), once the window has some.
 	layers, web ptr
 	placed      []platform.WebViewPlacement
+	// deco caches what the window paints around the area
+	// (decoration_cache.go).
+	deco decorations
 }
 
 // GDK event masks of the drawing area: pointer motion, button press and
@@ -238,6 +241,7 @@ func (s *surface) newArea(gl bool) {
 		gtkGLAreaSetAutoRender(s.area, false)
 		connect(s.area, "create-context", cbAreaContext, data)
 		connect(s.area, "render", cbSurfaceRender, data)
+		s.cacheDecorations()
 	}
 	s.gl = gl
 	gtkWidgetSetCanFocus(s.area, true)
@@ -880,6 +884,7 @@ func initSurfaceCallbacks() {
 	cbSurfaceUnrealize = purego.NewCallback(func(widget, data ptr) {
 		if s := b().surfaceOf(data); s != nil {
 			gtkIMContextSetClientWindow(s.im, 0)
+			s.deco.drop()
 		}
 	})
 	cbSurfaceRealize = purego.NewCallback(func(widget, data ptr) {

@@ -232,14 +232,21 @@ type view struct {
 	// it pulls the content down past the viewport's top row, in DIPs,
 	// under a row (smooth.go). above is that row, from rsAbove, a render
 	// state of the viewport a row up, while aboveOK.
-	smooth     smoothScroll
-	pull       float32
+	smooth smoothScroll
+	pull   float32
+	// pullBottom is whether the pull was left with the viewport at the
+	// bottom: it stays as output comes, and goes once the viewport jumps
+	// to the bottom from a pull above it.
+	pullBottom bool
 	rsAbove    *vt.RenderState
 	above      rowCache
 	aboveOK    bool
-	zoomed     float32 // wheel with the zoom modifier not yet a notch
-	scrollZoom bool    // a touchpad scroll gesture zooms, from how it began
-	ticking    bool    // an autoscroll tick is due
+	// rowsBuilt and paints count the rows buildRow made and the
+	// paints, for tests.
+	rowsBuilt, paints int
+	zoomed            float32 // wheel with the zoom modifier not yet a notch
+	scrollZoom        bool    // a touchpad scroll gesture zooms, from how it began
+	ticking           bool    // an autoscroll tick is due
 	// reduceMotion is the desktop's: a wheel's notches move at once.
 	reduceMotion bool
 
@@ -1026,14 +1033,14 @@ func (v *view) cellAt(x, y float32) (col, row int) {
 func (v *view) pointerEvent(ev ui.InputEvent) bool {
 	t := v.t
 	v.pointer = [2]float32{ev.X, ev.Y}
-	if ev.Kind == ui.InputPointerDown && (v.pull != 0 || v.smooth.moving()) {
-		// A press selects, or takes the scroll bar, at whole rows.
-		t.mu.Lock()
-		v.settleScroll()
-		t.mu.Unlock()
-	}
 	t.mu.Lock()
 	defer t.mu.Unlock()
+	if ev.Kind == ui.InputPointerDown && (v.pull != 0 || v.smooth.moving()) {
+		// A press stops the scrollback on the rows it shows, once the press
+		// is mapped to the cell drawn under it (cellAt counts the pull):
+		// what it selects, or drags, goes on at whole rows.
+		defer v.settleScroll()
+	}
 	if t.term == nil || v.cellW == 0 {
 		return false
 	}
@@ -1412,14 +1419,8 @@ func (v *view) scroll(ev ui.InputEvent) bool {
 	m := t.opts.ScrollMultiplier
 	t.mu.Unlock()
 	if ev.DX == 0 && ev.DY == 0 {
-		// The fingers lifted from a touchpad (GTK's stop event): a flick
-		// of the scrollback goes on.
-		if !ev.Precise && v.wheelScrollsBack(ev.Mods) {
-			t.mu.Lock()
-			v.smooth.lift(ev.Time)
-			t.mu.Unlock()
-			v.services.Invalidate()
-		}
+		// The fingers lifted from a touchpad (GTK's stop event): nothing
+		// scrolls, and a notch's glide goes on as it was.
 		return true
 	}
 	d := m.rows(ev.DY, ch, ev.Precise, runtime.GOOS) * ch

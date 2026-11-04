@@ -132,6 +132,7 @@ func (b *Backend) Init(h platform.AppHandler, opts platform.AppOptions) error {
 		bind(libGDK, &b.announceCSD, "gdk_wayland_window_announce_csd")
 	}
 	initCallbacks()
+	installPoll()
 	return nil
 }
 

@@ -116,6 +116,9 @@ func (e *node) spanStyle() Span {
 	if t.set&setDecoOffset != 0 {
 		s.UnderlineOffset, s.offsetSet = t.decoOffset, true
 	}
+	if t.set&setStroke != 0 {
+		s.strokeWidth, s.strokeColor, s.strokeSet = t.strokeWidth, t.strokeColor, true
+	}
 	switch {
 	case t.set&setBackground != 0:
 		s.Background = t.background
@@ -162,6 +165,9 @@ func over(s, base Span) Span {
 	}
 	if s.Background.A == 0 {
 		s.Background = base.Background
+	}
+	if !s.strokeSet {
+		s.strokeWidth, s.strokeColor, s.strokeSet = base.strokeWidth, base.strokeColor, base.strokeSet
 	}
 	if s.LetterSpacing == 0 {
 		s.LetterSpacing = base.LetterSpacing

@@ -151,6 +151,7 @@ const (
 	formatSetTextAlignment     = 3
 	formatSetWordWrapping      = 5
 	formatSetReadingDirection  = 6
+	formatSetIncrementalTab    = 8
 	layoutSetFontCollection    = 30
 	layoutSetFontFamilyName    = 31
 	layoutSetFontWeight        = 32
@@ -792,6 +793,10 @@ func (e *dwrite) shape(text []rune, style Style, spans []Span, width float32, rt
 		wrapping = wordWrappingWholeWord
 	}
 	call(layout, formatSetWordWrapping, wrapping)
+	if style.tabStop > 0 {
+		// Every stop at multiples of it, from the start of each line.
+		method[func(this uintptr, stop float32) uintptr](layout, formatSetIncrementalTab)(layout, style.tabStop)
+	}
 	e.typeset(layout, style, spans, text)
 	if rtl {
 		// Trailing alignment keeps the lines at the left, as left-to-right

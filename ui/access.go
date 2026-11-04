@@ -88,6 +88,28 @@ const (
 	// RoleHeading is the title of a section, named by its text, its rank
 	// set with Level.
 	RoleHeading
+	// RoleRegion is a landmark with a Label, as an activity feed or a
+	// panel: screen readers list it among the window's landmarks, and
+	// jump to it. Without a Label it is a group, as ARIA's region.
+	RoleRegion
+	// RoleLog is a live region of messages added in order, as a chat's
+	// transcript: screen readers read out what is added to it, once it has
+	// shown, after what they are reading.
+	RoleLog
+	// RoleTimer counts time, as a countdown, whose changes screen readers
+	// read only when the user goes to it.
+	RoleTimer
+	// RoleAlert is a live region of important news, as a field's error:
+	// screen readers read its content out at once, interrupting what they
+	// are reading, as it appears and whenever it changes.
+	RoleAlert
+	// RoleSeparator divides groups of content or controls, as a rule
+	// between a toolbar's groups of buttons (a Divider): screen readers
+	// read it as running up and down when it is taller than wide.
+	RoleSeparator
+	// RoleRowHeader is the cell naming its row of a table, as
+	// RoleColumnHeader names a column.
+	RoleRowHeader
 	// RoleNavigation is a landmark holding links that move around the
 	// app or a document, as a breadcrumb trail (Breadcrumbs) or a
 	// navigation bar: screen readers list it among the window's
@@ -236,7 +258,8 @@ func leafRole(r platform.AccessRole) bool {
 	switch r {
 	case platform.RoleGroup, platform.RoleList, platform.RoleScroll, platform.RoleDialog, platform.RoleAlertDialog, platform.RolePopup, platform.RoleStatus,
 		platform.RoleTabList, platform.RoleTable, platform.RoleRow, platform.RoleCell, platform.RoleTree, platform.RoleListItem,
-		platform.RoleToolbar, platform.RoleRadioGroup, platform.RoleMenu, platform.RoleMenuBar, platform.RoleNavigation:
+		platform.RoleToolbar, platform.RoleRadioGroup, platform.RoleMenu, platform.RoleMenuBar, platform.RoleNavigation,
+		platform.RoleRegion, platform.RoleLog, platform.RoleTimer, platform.RoleAlert:
 		return false
 	}
 	return true
@@ -438,7 +461,8 @@ func (rt *engine) accessDetails(e *node, n *platform.AccessNode) {
 	if e.segment {
 		n.States |= platform.AccessSegment
 	}
-	if e.vertical {
+	if e.vertical || n.Role == platform.RoleSeparator && e.h > e.w {
+		// A slider going up, or a rule running up and down.
 		n.States |= platform.AccessVertical
 	}
 	if e.search {
@@ -475,6 +499,14 @@ func (rt *engine) accessDetails(e *node, n *platform.AccessNode) {
 	// as leaves are, but show what is inside them too, as a toast's button.
 	if n.Label == "" && (leafRole(n.Role) || n.Role == platform.RoleListItem || n.Role == platform.RoleRow || n.Role == platform.RoleStatus) {
 		n.Label = e.innerText()
+	}
+	if n.Label == "" && e.kind == kindText {
+		// A text of another role, as an alert or a cell, whose text has no
+		// node of its own.
+		n.Label = e.text
+	}
+	if n.Role == platform.RoleRegion && n.Label == "" {
+		n.Role = platform.RoleGroup // only a region with a name is a landmark
 	}
 	switch e.checked {
 	case 2:
@@ -578,7 +610,9 @@ func (rt *engine) accessibilityOn() {
 			rt.requestFrame()
 		}
 	}
-	rt.host.updateAccessibility(rt.windowAccess(rt.accessTree()))
+	t := rt.accessTree()
+	rt.liveRegions(t, false) // what live regions show was there before
+	rt.host.updateAccessibility(rt.windowAccess(t))
 }
 
 // accessAction performs an action of assistive technology on an element

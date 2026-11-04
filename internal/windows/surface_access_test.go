@@ -93,12 +93,28 @@ func TestUIATreeAnnouncer(t *testing.T) {
 	if got := ids(tree.root.children); !slices.Equal(got, []uint64{1, announcerID}) {
 		t.Fatalf("the root's children %v", got)
 	}
+	// Alerts go into an assertive region of their own, after it.
+	frame = accessTree(2)
+	frame.Alerts = []string{"Name is required", "Too short"}
+	tree.update(frame)
+	tree.update(accessTree(2))
+	e := tree.nodes[alerterID]
+	if e == nil || e.n.Label != "Name is required Too short" {
+		t.Fatal("the alerts' region left the tree")
+	}
+	var live variant
+	if e.property(uiaLiveSettingProperty, &live); live.Val != 2 {
+		t.Errorf("the alerts' live setting %d, want assertive", live.Val)
+	}
+	if got := ids(tree.root.children); !slices.Equal(got, []uint64{1, announcerID, alerterID}) {
+		t.Fatalf("the root's children %v", got)
+	}
 	for _, n := range tree.withAnnouncer[:cap(tree.withAnnouncer)] {
 		if n.Label != "" {
 			t.Fatalf("the nodes with the announcer keep %q", n.Label)
 		}
 	}
-	if tree.announcerTree.Nodes != nil || tree.announcerTree.Announcements != nil {
+	if tree.announcerTree.Nodes != nil || tree.announcerTree.Announcements != nil || tree.announcerTree.Alerts != nil {
 		t.Fatal("the tree with the announcer is kept")
 	}
 }

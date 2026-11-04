@@ -67,12 +67,16 @@ func postNote(obj id, name string) {
 	}
 }
 
-// announce asks VoiceOver to read text out, after what it is reading
-// (NSAccessibilityAnnouncementRequestedNotification).
-func announce(app id, text string) {
+// announce asks VoiceOver to read text out, after what it is reading, or
+// at once for an alert (NSAccessibilityAnnouncementRequestedNotification).
+func announce(app id, text string, alert bool) {
 	info := send(class("NSMutableDictionary"), "dictionary")
 	send(info, "setObject:forKey:", uintptr(nsString(text)), uintptr(nsString("AXAnnouncementKey")))
-	send(info, "setObject:forKey:", uintptr(nsNumberInt(50)), uintptr(nsString("AXPriorityKey"))) // NSAccessibilityPriorityMedium
+	priority := 50 // NSAccessibilityPriorityMedium
+	if alert {
+		priority = 90 // NSAccessibilityPriorityHigh, which interrupts
+	}
+	send(info, "setObject:forKey:", uintptr(nsNumberInt(priority)), uintptr(nsString("AXPriorityKey")))
 	purego.SyscallN(postAccessInfo, uintptr(app), uintptr(nsString("AXAnnouncementRequested")), uintptr(info))
 }
 
@@ -125,6 +129,13 @@ var accessRoles = map[platform.AccessRole][2]string{
 	// WebKit's headings, whose value is their level, and landmarks.
 	platform.RoleHeading:    {"AXHeading", ""},
 	platform.RoleNavigation: {"AXGroup", "AXLandmarkNavigation"},
+	platform.RoleRegion:     {"AXGroup", "AXLandmarkRegion"},
+	// Live regions, as WebKit's, and a rule, as WebKit's separator.
+	platform.RoleLog:       {"AXGroup", "AXApplicationLog"},
+	platform.RoleTimer:     {"AXGroup", "AXApplicationTimer"},
+	platform.RoleAlert:     {"AXGroup", "AXApplicationAlert"},
+	platform.RoleSeparator: {"AXSplitter", ""},
+	platform.RoleRowHeader: {"AXCell", ""},
 }
 
 // menuItem reports whether nodes of a role are items of a menu.
@@ -260,7 +271,7 @@ func (el *accessElement) apply(n platform.AccessNode, fresh bool) (valueChanged 
 	if fresh || n.States&platform.AccessExpanded != o.States&platform.AccessExpanded {
 		send(obj, "setAccessibilityExpanded:", boolArg(n.States&platform.AccessExpanded != 0))
 	}
-	if n.Role == platform.RoleSlider && (fresh || n.States&platform.AccessVertical != o.States&platform.AccessVertical) {
+	if (n.Role == platform.RoleSlider || n.Role == platform.RoleSeparator) && (fresh || n.Role != o.Role || n.States&platform.AccessVertical != o.States&platform.AccessVertical) {
 		// NSAccessibilityOrientationVertical or Horizontal.
 		orient := 2
 		if n.States&platform.AccessVertical != 0 {
@@ -497,10 +508,13 @@ func (s *surface) UpdateAccessibility(tree *platform.AccessTree) {
 			}
 		}
 		for _, text := range tree.Announcements {
-			announce(s.w.b.app, text)
+			announce(s.w.b.app, text, false)
+		}
+		for _, text := range tree.Alerts {
+			announce(s.w.b.app, text, true)
 		}
 		s.access = *tree
-		s.access.Announcements = nil
+		s.access.Announcements, s.access.Alerts = nil, nil
 	})
 }
 
@@ -614,6 +628,13 @@ func registerAccessClass() {
 			if el.node.Current != platform.CurrentNone {
 				names = send(names, "arrayByAddingObject:", uintptr(nsString("AXARIACurrent")))
 			}
+			// How a live region is read, as WebKit's say aria-live,
+			// aria-atomic and aria-relevant.
+			if live, _ := el.node.Role.Live(); live != "" {
+				for _, name := range []string{"AXARIALive", "AXARIAAtomic", "AXARIARelevant"} {
+					names = send(names, "arrayByAddingObject:", uintptr(nsString(name)))
+				}
+			}
 			return names
 		}),
 		method("accessibilityAttributeValue:", func(self id, cmd objc.SEL, attr id) id {
@@ -635,6 +656,16 @@ func registerAccessClass() {
 				case "AXARIACurrent":
 					if c := el.node.Current; c != platform.CurrentNone {
 						return nsString(c.String())
+					}
+				case "AXARIALive", "AXARIAAtomic", "AXARIARelevant":
+					if live, atomic := el.node.Role.Live(); live != "" {
+						switch stringOf(attr) {
+						case "AXARIALive":
+							return nsString(live)
+						case "AXARIAAtomic":
+							return nsBool(atomic)
+						}
+						return nsString("additions text") // ARIA's default
 					}
 				}
 			}

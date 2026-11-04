@@ -12,8 +12,8 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/egoist/mygo/internal/gamut"
-	"github.com/egoist/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/gamut"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
 )
 
 // The inspector shows the elements of a window's frames in a panel docked

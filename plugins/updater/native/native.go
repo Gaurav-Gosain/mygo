@@ -11,9 +11,9 @@
 package native
 
 import (
-	"github.com/egoist/mygo"
-	"github.com/egoist/mygo/plugins/updater"
-	"github.com/egoist/mygo/plugins/updater/internal/frontend"
+	"github.com/Gaurav-Gosain/mygo"
+	"github.com/Gaurav-Gosain/mygo/plugins/updater"
+	"github.com/Gaurav-Gosain/mygo/plugins/updater/internal/frontend"
 )
 
 // Plugin is the plugin with the default options.

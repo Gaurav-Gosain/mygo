@@ -14,7 +14,7 @@ import (
 	"syscall"
 	"unsafe"
 
-	"github.com/egoist/mygo/internal/gpu"
+	"github.com/Gaurav-Gosain/mygo/internal/gpu"
 )
 
 func main() {

@@ -6,7 +6,7 @@ view that runs the user's shell, or any program, in a pseudo-terminal, with
 at run time with no cgo.
 
 ```go
-import "github.com/egoist/mygo/plugins/terminal"
+import "github.com/Gaurav-Gosain/mygo/plugins/terminal"
 
 term, err := terminal.New(terminal.Options{})
 // ...

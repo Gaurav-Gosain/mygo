@@ -24,11 +24,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/egoist/mygo/internal/shader"
-	"github.com/egoist/mygo/internal/shaderir"
-	"github.com/egoist/mygo/internal/shaderir/glsl"
-	"github.com/egoist/mygo/internal/shaderir/hlsl"
-	"github.com/egoist/mygo/internal/shaderir/msl"
+	"github.com/Gaurav-Gosain/mygo/internal/shader"
+	"github.com/Gaurav-Gosain/mygo/internal/shaderir"
+	"github.com/Gaurav-Gosain/mygo/internal/shaderir/glsl"
+	"github.com/Gaurav-Gosain/mygo/internal/shaderir/hlsl"
+	"github.com/Gaurav-Gosain/mygo/internal/shaderir/msl"
 )
 
 func glslVertexNormalize(str string) string {

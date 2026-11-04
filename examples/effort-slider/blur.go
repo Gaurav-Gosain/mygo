@@ -4,7 +4,7 @@ import (
 	"image"
 	"math"
 
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 // The painter draws glyphs sharp; the demo blurs its letters as they come

@@ -11,8 +11,8 @@ import (
 	"unicode/utf8"
 	"unsafe"
 
-	"github.com/egoist/mygo/internal/platform"
-	"github.com/egoist/mygo/internal/text"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/text"
 )
 
 // checkBuffer compares b with the runes it should hold.

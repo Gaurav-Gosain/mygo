@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 func TestChat(t *testing.T) {

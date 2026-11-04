@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/egoist/mygo/transfer"
+	"github.com/Gaurav-Gosain/mygo/transfer"
 )
 
 func TestClipboardNativeAliasesAndFileList(t *testing.T) {

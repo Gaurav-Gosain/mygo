@@ -8,8 +8,8 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/egoist/mygo/internal/platform"
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 // TestPreloadAllFrames: the preload script runs in the top frame only,

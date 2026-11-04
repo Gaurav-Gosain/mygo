@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/egoist/mygo/transfer"
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/transfer"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 // proseTester builds an EditorBase of doc, 10 DIPs an em in theme th,

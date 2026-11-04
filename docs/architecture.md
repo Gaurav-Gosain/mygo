@@ -4143,7 +4143,7 @@ renderer's (`gputest.Compare`).
   a default icon at `resources/icon.png`, fetches modules, installs the
   JavaScript dependencies with Bun and generates the client. package.json
   runs the CLI from mygo-cli (`bun run dev`, `bun run build`), or with
-  `go run github.com/egoist/mygo/cmd/mygo` for `-mygo <checkout>`, whose
+  `go run github.com/Gaurav-Gosain/mygo/cmd/mygo` for `-mygo <checkout>`, whose
   go.mod replaces the module with the checkout. mygo.config.ts imports
   `defineConfig` from mygo-cli, or from the checkout's `packages/cli` by a
   relative path between real locations, and sets `devUrl`, `devCommand` and
@@ -4693,8 +4693,8 @@ To check a change, build both apps as the benchmarks do, before and
 after, on each platform it touches:
 
 ```sh
-go build -trimpath -tags mygo_noinspector -ldflags "-s -w -X github.com/egoist/mygo.production=1" -o /tmp/counter-native ./examples/counter-native
-GOOS=windows go build -trimpath -tags mygo_noinspector -ldflags "-s -w -H=windowsgui -X github.com/egoist/mygo.production=1" -o /tmp/hello.exe ./examples/hello
+go build -trimpath -tags mygo_noinspector -ldflags "-s -w -X github.com/Gaurav-Gosain/mygo.production=1" -o /tmp/counter-native ./examples/counter-native
+GOOS=windows go build -trimpath -tags mygo_noinspector -ldflags "-s -w -H=windowsgui -X github.com/Gaurav-Gosain/mygo.production=1" -o /tmp/hello.exe ./examples/hello
 ```
 
 When an app grows, `go tool nm -size -sort size` on a build without `-s

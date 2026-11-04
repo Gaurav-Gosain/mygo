@@ -9,9 +9,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/egoist/mygo/i18n"
-	"github.com/egoist/mygo/internal/i18ngen"
-	"github.com/egoist/mygo/internal/l10n"
+	"github.com/Gaurav-Gosain/mygo/i18n"
+	"github.com/Gaurav-Gosain/mygo/internal/i18ngen"
+	"github.com/Gaurav-Gosain/mygo/internal/l10n"
 )
 
 func runI18n(args []string) error {

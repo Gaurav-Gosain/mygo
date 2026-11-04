@@ -10,8 +10,8 @@ they need no plugin registration and close their own connections.
 
 ```go
 import (
-    "github.com/egoist/mygo"
-    "github.com/egoist/mygo/plugins/sqlite"
+    "github.com/Gaurav-Gosain/mygo"
+    "github.com/Gaurav-Gosain/mygo/plugins/sqlite"
 )
 
 func main() {

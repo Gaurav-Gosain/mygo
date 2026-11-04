@@ -1,4 +1,4 @@
-module github.com/egoist/mygo
+module github.com/Gaurav-Gosain/mygo
 
 go 1.27.3
 

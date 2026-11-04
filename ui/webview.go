@@ -4,9 +4,9 @@ import (
 	"math"
 	"slices"
 
-	"github.com/egoist/mygo/internal/platform"
-	"github.com/egoist/mygo/internal/scene"
-	"github.com/egoist/mygo/internal/surface"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/surface"
 )
 
 // NativeWebView is a web view a window made for its content to show,

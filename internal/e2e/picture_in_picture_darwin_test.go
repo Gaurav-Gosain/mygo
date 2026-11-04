@@ -5,8 +5,8 @@ package e2e
 import (
 	"testing"
 
-	"github.com/egoist/mygo"
-	"github.com/egoist/mygo/internal/darwin"
+	"github.com/Gaurav-Gosain/mygo"
+	"github.com/Gaurav-Gosain/mygo/internal/darwin"
 )
 
 // allowsPictureInPicture reports whether a window's page lets its videos

@@ -5,7 +5,7 @@ import (
 	"image"
 	"slices"
 
-	"github.com/egoist/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
 )
 
 // Partial redraws. A frame that changes little of a window (a caret

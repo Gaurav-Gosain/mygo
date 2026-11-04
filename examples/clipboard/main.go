@@ -9,9 +9,9 @@ import (
 	"log"
 	"strings"
 
-	"github.com/egoist/mygo"
-	"github.com/egoist/mygo/transfer"
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo"
+	"github.com/Gaurav-Gosain/mygo/transfer"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 const noteFormat transfer.Format = "application/vnd.mygo.clipboard-note+json"

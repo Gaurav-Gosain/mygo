@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/egoist/mygo/plugins/terminal/internal/vt"
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/plugins/terminal/internal/vt"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 // halves returns the Kitty graphics sequence that transmits a w×h image,

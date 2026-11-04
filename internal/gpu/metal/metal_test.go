@@ -15,9 +15,9 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/egoist/mygo/internal/gpu"
-	"github.com/egoist/mygo/internal/gpu/gputest"
-	"github.com/egoist/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/gpu"
+	"github.com/Gaurav-Gosain/mygo/internal/gpu/gputest"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
 )
 
 // unavailable ends a test for which Metal cannot be used: it skips it, or, where

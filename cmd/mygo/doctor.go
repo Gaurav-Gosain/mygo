@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/egoist/mygo/internal/nsis"
-	"github.com/egoist/mygo/internal/webview2"
+	"github.com/Gaurav-Gosain/mygo/internal/nsis"
+	"github.com/Gaurav-Gosain/mygo/internal/webview2"
 )
 
 func runDoctor(args []string) error {

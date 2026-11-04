@@ -1,8 +1,8 @@
 package ui
 
 import (
-	"github.com/egoist/mygo/internal/scene"
-	"github.com/egoist/mygo/transfer"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/transfer"
 )
 
 // Elements drag values to others within a window: Drag makes an element

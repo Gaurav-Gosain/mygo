@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/egoist/mygo/internal/platform"
-	"github.com/egoist/mygo/internal/scene"
-	"github.com/egoist/mygo/internal/surface"
-	"github.com/egoist/mygo/transfer"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/surface"
+	"github.com/Gaurav-Gosain/mygo/transfer"
 )
 
 // testSurface is a surface that counts the frames drawn in memory.

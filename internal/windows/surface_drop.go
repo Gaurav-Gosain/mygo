@@ -7,8 +7,8 @@ import (
 	"syscall"
 	"unsafe"
 
-	"github.com/egoist/mygo/internal/platform"
-	"github.com/egoist/mygo/transfer"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/transfer"
 )
 
 // Files dragged over native UI come through OLE drag and drop: the

@@ -4,7 +4,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/egoist/mygo"
+	"github.com/Gaurav-Gosain/mygo"
 )
 
 func TestFilter(t *testing.T) {

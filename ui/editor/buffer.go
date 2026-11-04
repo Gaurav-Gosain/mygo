@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/egoist/mygo/internal/diff"
-	"github.com/egoist/mygo/internal/rope"
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/internal/diff"
+	"github.com/Gaurav-Gosain/mygo/internal/rope"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 // Buffer is the text an editor edits, with its undo history and its

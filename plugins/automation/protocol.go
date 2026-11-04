@@ -14,7 +14,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/egoist/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
 )
 
 // maxLine is the longest request a line may hold, as a script to

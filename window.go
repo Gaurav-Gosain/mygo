@@ -16,8 +16,8 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/egoist/mygo/internal/platform"
-	"github.com/egoist/mygo/internal/surface"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/surface"
 )
 
 // TitleBarStyle selects how the title bar of a framed window looks.

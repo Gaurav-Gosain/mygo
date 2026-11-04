@@ -5,8 +5,8 @@ import (
 	"math"
 	"time"
 
-	"github.com/egoist/mygo/ui"
-	"github.com/egoist/mygo/ui/shader"
+	"github.com/Gaurav-Gosain/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/ui/shader"
 )
 
 // The grid: cells cellSize DIPs wide and twice as high, at least minCols

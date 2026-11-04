@@ -9,7 +9,7 @@ import (
 
 	"github.com/ebitengine/purego"
 
-	"github.com/egoist/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
 )
 
 // RenderOffscreen draws s with a renderer of its own into a texture,

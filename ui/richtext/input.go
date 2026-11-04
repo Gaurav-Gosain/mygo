@@ -3,9 +3,9 @@ package richtext
 import (
 	"runtime"
 
-	"github.com/egoist/mygo/internal/rope"
-	"github.com/egoist/mygo/internal/text"
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/internal/rope"
+	"github.com/Gaurav-Gosain/mygo/internal/text"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 const scrollbarWidth = 10

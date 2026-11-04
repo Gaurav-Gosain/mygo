@@ -6,8 +6,8 @@ import (
 	"math/rand/v2"
 	"time"
 
-	"github.com/egoist/mygo/ui"
-	"github.com/egoist/mygo/ui/chart"
+	"github.com/Gaurav-Gosain/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/ui/chart"
 )
 
 // galleryCharts is the state of the Charts page: the sales of the bar

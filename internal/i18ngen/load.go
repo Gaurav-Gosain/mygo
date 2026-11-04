@@ -20,7 +20,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/egoist/mygo/i18n"
+	"github.com/Gaurav-Gosain/mygo/i18n"
 )
 
 // Options say what catalogs to read.
@@ -38,7 +38,7 @@ type Options struct {
 	// keys "<namespace>.<key>" change, by namespace.
 	Libraries map[string]*Catalog
 	// Translations are the languages MyGo's own strings are translated
-	// to, each in a package of github.com/egoist/mygo/locales, which the
+	// to, each in a package of github.com/Gaurav-Gosain/mygo/locales, which the
 	// accessors of an app's catalogs import for the app's languages.
 	Translations []string
 	// Own is set for MyGo's own strings (internal/l10n), whose accessors

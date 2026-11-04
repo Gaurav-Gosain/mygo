@@ -20,9 +20,9 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/egoist/mygo"
-	"github.com/egoist/mygo/ui"
-	"github.com/egoist/mygo/ui/richtext"
+	"github.com/Gaurav-Gosain/mygo"
+	"github.com/Gaurav-Gosain/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/ui/richtext"
 )
 
 // note is a note: its text, saved, and the document the editor edits.

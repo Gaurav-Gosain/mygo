@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/egoist/mygo"
-	"github.com/egoist/mygo/internal/darwin"
+	"github.com/Gaurav-Gosain/mygo"
+	"github.com/Gaurav-Gosain/mygo/internal/darwin"
 )
 
 const tabFocusPage = `<!doctype html><html><body style="margin:0;height:100vh">

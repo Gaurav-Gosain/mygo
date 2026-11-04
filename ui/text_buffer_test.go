@@ -10,7 +10,7 @@ import (
 	"unsafe"
 	"weak"
 
-	"github.com/egoist/mygo/internal/rope"
+	"github.com/Gaurav-Gosain/mygo/internal/rope"
 )
 
 func checkTextTree(t *testing.T, n *rope.Node) {

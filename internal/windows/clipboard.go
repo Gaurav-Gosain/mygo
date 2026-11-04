@@ -11,8 +11,8 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/egoist/mygo/internal/platform"
-	"github.com/egoist/mygo/transfer"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/transfer"
 )
 
 const clipboardLengthPrefix = "MyGo.Transfer.Length:"

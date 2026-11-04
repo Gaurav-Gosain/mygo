@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 // A demo throws its pieces, which head off in the next frame and go once

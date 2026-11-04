@@ -13,8 +13,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/egoist/mygo/internal/gpu"
-	"github.com/egoist/mygo/internal/gpu/metal"
+	"github.com/Gaurav-Gosain/mygo/internal/gpu"
+	"github.com/Gaurav-Gosain/mygo/internal/gpu/metal"
 )
 
 func main() {

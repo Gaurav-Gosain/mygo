@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/egoist/mygo/internal/platform"
-	"github.com/egoist/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
 )
 
 func selectableAt(t *testing.T, tt *Tester, text string, at int) (float32, float32) {

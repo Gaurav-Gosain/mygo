@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"hash/fnv"
+	"math"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -365,6 +366,23 @@ func doubleClick() platform.DoubleClick {
 	return platform.DoubleClick{Time: time.Duration(ms) * time.Millisecond, DX: float64(distance), DY: float64(distance)}
 }
 
+// caretBlinkTimeout reads gtk-cursor-blink-timeout, in seconds, which GTK
+// sets to G_MAXINT for a caret that blinks for ever.
+func caretBlinkTimeout(settings ptr) time.Duration {
+	if settings == 0 {
+		return 0
+	}
+	secs := int32(10) // GTK's default
+	gObjectGetPtr(settings, cs("gtk-cursor-blink-timeout"), unsafe.Pointer(&secs), 0)
+	switch {
+	case secs == math.MaxInt32:
+		return -1
+	case secs <= 0:
+		return 0
+	}
+	return time.Duration(secs) * time.Second
+}
+
 // Preferences reads GTK's animations setting, and the accent, contrast
 // and text size the desktop portal gives, as GNOME's and KDE's do.
 func (t theme) Preferences() platform.Preferences {
@@ -376,6 +394,7 @@ func (t theme) Preferences() platform.Preferences {
 	var name ptr
 	gObjectGetPtr(settings, cs("gtk-theme-name"), unsafe.Pointer(&name), 0)
 	p.HighContrast = strings.Contains(strings.ToLower(takeStr(name)), "highcontrast")
+	p.CaretBlinkTimeout = caretBlinkTimeout(settings)
 	all, ok := portalSettings(appearanceSettings, gnomeInterfaceSettings)
 	if !ok {
 		return p

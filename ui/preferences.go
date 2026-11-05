@@ -1,5 +1,7 @@
 package ui
 
+import "time"
+
 // Preferences are settings of the desktop that the system's own controls
 // follow. The default theme follows them, and Animate follows
 // ReduceMotion; a theme of your own (Context.SetTheme) and drawing of your
@@ -22,7 +24,16 @@ type Preferences struct {
 	// Windows's and GNOME's text size settings say, 1 for usual: the
 	// default theme's FontSize is that much larger.
 	TextScale float32
+	// CaretBlinkTimeout is how long a caret blinks after the last key, or
+	// the focus coming, before it stays on and draws nothing more: GTK's
+	// gtk-cursor-blink-timeout, 10 seconds where the desktop does not say.
+	// Negative, it blinks for as long as it has the focus.
+	CaretBlinkTimeout time.Duration
 }
+
+// DefaultCaretBlinkTimeout is Preferences.CaretBlinkTimeout where the
+// desktop does not say, GTK's default.
+const DefaultCaretBlinkTimeout = 10 * time.Second
 
 // Preferences returns the settings of the desktop that controls follow.
 // A frame follows their changes.
@@ -40,6 +51,10 @@ func (rt *engine) preferences() Preferences {
 		}
 		if rt.prefs.TextScale <= 0 {
 			rt.prefs.TextScale = 1
+		}
+		rt.prefs.CaretBlinkTimeout = p.CaretBlinkTimeout
+		if rt.prefs.CaretBlinkTimeout == 0 {
+			rt.prefs.CaretBlinkTimeout = DefaultCaretBlinkTimeout
 		}
 		rt.prefsKnown = true
 	}

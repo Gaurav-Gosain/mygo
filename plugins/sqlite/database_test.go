@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/egoist/mygo/internal/wait"
+	"github.com/Gaurav-Gosain/mygo/internal/wait"
 )
 
 func testDB(t *testing.T, path string) *DB {

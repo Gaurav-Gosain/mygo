@@ -6,8 +6,8 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/egoist/mygo/internal/scene"
-	"github.com/egoist/mygo/internal/text"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/text"
 )
 
 func (ed *editor) lineHeight() float32 {

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"syscall/js"
 
-	"github.com/egoist/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
 )
 
 // menuCSS styles context menus, which the page draws with HTML: browsers

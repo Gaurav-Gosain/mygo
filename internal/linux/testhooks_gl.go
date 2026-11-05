@@ -2,7 +2,7 @@
 
 package linux
 
-import "github.com/egoist/mygo/internal/gpu/gl"
+import "github.com/Gaurav-Gosain/mygo/internal/gpu/gl"
 
 // TestSurfaceGL tells how the native UI of a window draws: "opengl" when
 // its renderer draws in the GtkGLArea, "memory" when the GtkGLArea shows

@@ -5,7 +5,7 @@ import (
 	"math"
 	"testing"
 
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 func TestLineInto(t *testing.T) {

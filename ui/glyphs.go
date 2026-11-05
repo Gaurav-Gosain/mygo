@@ -3,8 +3,8 @@ package ui
 import (
 	"math"
 
-	"github.com/egoist/mygo/internal/scene"
-	"github.com/egoist/mygo/internal/text"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/text"
 )
 
 // Font is a font for text a Painter draws itself (Shape): a family list

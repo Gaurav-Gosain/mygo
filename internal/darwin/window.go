@@ -12,8 +12,8 @@ import (
 
 	"github.com/ebitengine/purego/objc"
 
-	"github.com/egoist/mygo/internal/bridge"
-	"github.com/egoist/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/bridge"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
 )
 
 const (

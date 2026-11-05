@@ -3,7 +3,7 @@ package mygo
 import (
 	"math"
 
-	"github.com/egoist/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
 )
 
 // fitContent is what a window that takes the size of its page's content

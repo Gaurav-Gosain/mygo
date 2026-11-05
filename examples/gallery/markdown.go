@@ -4,8 +4,8 @@ import (
 	"math/rand/v2"
 	"time"
 
-	"github.com/egoist/mygo/ui"
-	"github.com/egoist/mygo/ui/markdown"
+	"github.com/Gaurav-Gosain/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/ui/markdown"
 )
 
 // markdownSample is what the Markdown page shows, and streams.

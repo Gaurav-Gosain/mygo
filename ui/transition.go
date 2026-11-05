@@ -5,7 +5,7 @@ import (
 	"slices"
 	"time"
 
-	"github.com/egoist/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
 )
 
 // ElementTransition animates an element (Element.Transition) from what the

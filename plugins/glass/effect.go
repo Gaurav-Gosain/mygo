@@ -4,7 +4,7 @@ import (
 	_ "embed"
 	"math"
 
-	"github.com/egoist/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
 )
 
 // The shaders of the glass and of the blur, one for each renderer, which

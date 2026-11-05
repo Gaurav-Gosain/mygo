@@ -10,7 +10,7 @@ import (
 
 	"github.com/ebitengine/purego"
 
-	"github.com/egoist/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
 )
 
 // A presenter fetches the layer's next drawable on a thread of its own,

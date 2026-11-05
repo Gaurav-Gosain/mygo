@@ -3,8 +3,8 @@ package main
 import (
 	"testing"
 
-	"github.com/egoist/mygo/plugins/loading"
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/plugins/loading"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 // The gallery shows every indicator, named, and its options change them.

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/egoist/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
 )
 
 var (

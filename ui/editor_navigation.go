@@ -4,7 +4,7 @@ import (
 	"runtime"
 	"unicode/utf8"
 
-	"github.com/egoist/mygo/internal/text"
+	"github.com/Gaurav-Gosain/mygo/internal/text"
 )
 
 func (ed *editor) selection() (int, int) {

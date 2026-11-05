@@ -12,8 +12,8 @@ import (
 	"image/png"
 	"unsafe"
 
-	"github.com/egoist/mygo/internal/accelerator"
-	"github.com/egoist/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/accelerator"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
 )
 
 // notifyIconData is NOTIFYICONDATAW.

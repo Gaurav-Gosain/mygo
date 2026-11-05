@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/egoist/mygo/plugins/terminal/internal/vt"
+	"github.com/Gaurav-Gosain/mygo/plugins/terminal/internal/vt"
 )
 
 // ErrFullScreen is PrependHistory's error while a full-screen program's

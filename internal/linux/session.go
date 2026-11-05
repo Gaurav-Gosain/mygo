@@ -9,7 +9,7 @@ import (
 	"slices"
 	"sync"
 
-	"github.com/egoist/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
 )
 
 // Sessions (mygo.Session): a store is a WebKitWebContext of its own, with

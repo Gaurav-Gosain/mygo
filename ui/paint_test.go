@@ -6,7 +6,7 @@ import (
 	"math"
 	"testing"
 
-	"github.com/egoist/mygo/internal/raster"
+	"github.com/Gaurav-Gosain/mygo/internal/raster"
 )
 
 // countBlue counts the pixels of img that are mostly blue.

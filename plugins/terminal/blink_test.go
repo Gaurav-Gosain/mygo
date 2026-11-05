@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 // TestBlinkStops checks that a blinking cursor stops after the desktop's

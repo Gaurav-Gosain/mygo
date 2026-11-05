@@ -17,12 +17,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/egoist/mygo"
-	"github.com/egoist/mygo/internal/wait"
-	"github.com/egoist/mygo/plugins/fetch"
-	"github.com/egoist/mygo/plugins/sqlite"
-	"github.com/egoist/mygo/plugins/watch"
-	"github.com/egoist/mygo/plugins/websocket"
+	"github.com/Gaurav-Gosain/mygo"
+	"github.com/Gaurav-Gosain/mygo/internal/wait"
+	"github.com/Gaurav-Gosain/mygo/plugins/fetch"
+	"github.com/Gaurav-Gosain/mygo/plugins/sqlite"
+	"github.com/Gaurav-Gosain/mygo/plugins/watch"
+	"github.com/Gaurav-Gosain/mygo/plugins/websocket"
 )
 
 // pluginsPage loads the plugins' JavaScript packages, as built, with an

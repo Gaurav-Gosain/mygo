@@ -11,7 +11,7 @@ import (
 	"unicode"
 	"unsafe"
 
-	"github.com/egoist/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
 )
 
 // Style selects the font of a text.

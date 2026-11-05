@@ -13,7 +13,7 @@ import (
 	"io"
 	"time"
 
-	"github.com/egoist/mygo/transfer"
+	"github.com/Gaurav-Gosain/mygo/transfer"
 )
 
 // ErrUnsupported is returned by features the current backend cannot provide.

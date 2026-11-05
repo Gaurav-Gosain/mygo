@@ -7,8 +7,8 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/egoist/mygo/internal/gpu/gputest"
-	"github.com/egoist/mygo/internal/raster"
+	"github.com/Gaurav-Gosain/mygo/internal/gpu/gputest"
+	"github.com/Gaurav-Gosain/mygo/internal/raster"
 )
 
 // apis are the APIs the renderer draws with: OpenGL 3.3 and OpenGL ES 3.0.

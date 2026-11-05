@@ -3,7 +3,7 @@ package editor
 import (
 	"strconv"
 
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 // DiffState is a diff viewer's state, kept by the app across

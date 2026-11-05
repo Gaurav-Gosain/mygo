@@ -7,7 +7,7 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/egoist/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
 )
 
 // Driver is a backend's watcher. Every method but Wake runs on the

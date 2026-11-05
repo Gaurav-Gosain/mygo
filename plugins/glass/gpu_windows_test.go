@@ -4,9 +4,9 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/egoist/mygo/internal/gpu"
-	"github.com/egoist/mygo/internal/gpu/d3d11"
-	"github.com/egoist/mygo/internal/gpu/gputest"
+	"github.com/Gaurav-Gosain/mygo/internal/gpu"
+	"github.com/Gaurav-Gosain/mygo/internal/gpu/d3d11"
+	"github.com/Gaurav-Gosain/mygo/internal/gpu/gputest"
 )
 
 // TestDirect3D checks that Direct3D 11 draws the glass as the CPU does.

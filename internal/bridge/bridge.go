@@ -8,7 +8,7 @@ import (
 	_ "embed"
 	"encoding/json"
 
-	"github.com/egoist/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
 )
 
 //go:embed bridge.js

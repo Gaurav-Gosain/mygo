@@ -6,7 +6,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/egoist/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
 )
 
 func TestAuthHandler(t *testing.T) {

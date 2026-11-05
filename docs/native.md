@@ -465,7 +465,7 @@ settings as the pages do, and MyGo's own requests use it: those of the
 Your own clients opt in with its transport:
 
 ```go
-import "github.com/egoist/mygo/netproxy"
+import "github.com/Gaurav-Gosain/mygo/netproxy"
 
 client := &http.Client{Transport: netproxy.Transport(), Timeout: time.Minute}
 ```

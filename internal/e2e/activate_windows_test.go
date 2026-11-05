@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/egoist/mygo"
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 // TestAppFocusKeepsFront brings the app forward with the window in front

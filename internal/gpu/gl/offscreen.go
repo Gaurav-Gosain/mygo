@@ -9,7 +9,7 @@ import (
 
 	"github.com/ebitengine/purego"
 
-	"github.com/egoist/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
 )
 
 // EGL enumerations.

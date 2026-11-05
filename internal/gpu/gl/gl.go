@@ -21,8 +21,8 @@ import (
 	"unsafe"
 	"weak"
 
-	"github.com/egoist/mygo/internal/gpu"
-	"github.com/egoist/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/gpu"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
 )
 
 //go:embed shader.glsl

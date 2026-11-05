@@ -69,7 +69,7 @@ type generator struct {
 // imports that type instead of declaring one, which their JSON methods
 // would leave unknown.
 var runtimeTypes = map[string]string{
-	"github.com/egoist/mygo.ThemePreferences": "ThemePreferences",
+	"github.com/Gaurav-Gosain/mygo.ThemePreferences": "ThemePreferences",
 }
 
 // runtimeSentinel holds the names of runtimeTypes in generator.taken, so

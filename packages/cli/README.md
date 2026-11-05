@@ -17,7 +17,7 @@ bun run build                # mygo build: the packaged app
 In a project that depends on mygo-cli, `bunx mygo <command>` runs its
 `mygo`. Or install it globally with `npm install -g mygo-cli`. The commands
 are those of the CLI installed with Go
-(`go install github.com/egoist/mygo/cmd/mygo@latest`): `init`, `dev`,
+(`go install github.com/Gaurav-Gosain/mygo/cmd/mygo@latest`): `init`, `dev`,
 `build`, `generate`, `install-skills`, `keygen` and `doctor`. Building apps
 still needs [Go](https://go.dev/dl/), which compiles them.
 

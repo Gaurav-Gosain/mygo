@@ -24,7 +24,7 @@ release with a build tag, in a file of its own:
 
 package main
 
-import _ "github.com/egoist/mygo/plugins/automation"
+import _ "github.com/Gaurav-Gosain/mygo/plugins/automation"
 ```
 
 ```sh

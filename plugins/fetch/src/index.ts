@@ -5,7 +5,7 @@
  * Go reads it. The Go side must use the plugin:
  *
  * ```go
- * mygo.Use(fetch.Plugin) // github.com/egoist/mygo/plugins/fetch
+ * mygo.Use(fetch.Plugin) // github.com/Gaurav-Gosain/mygo/plugins/fetch
  * ```
  *
  * ```ts

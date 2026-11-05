@@ -5,8 +5,8 @@ import (
 	"image"
 	"slices"
 
-	"github.com/egoist/mygo/internal/raster"
-	"github.com/egoist/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/raster"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
 )
 
 // clipMaskSlot is a retained clip mask. Masks outlive the frames that

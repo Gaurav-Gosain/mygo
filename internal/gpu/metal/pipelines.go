@@ -7,7 +7,7 @@ import (
 	"os"
 	"sync"
 
-	"github.com/egoist/mygo/internal/gpu"
+	"github.com/Gaurav-Gosain/mygo/internal/gpu"
 )
 
 // The pipelines of the classes of batches (gpu.Class) are specialized from the

@@ -203,7 +203,7 @@ func TestTemplate(t *testing.T) {
 	local := t.TempDir()
 	cli, _ := filepath.Abs(filepath.Join("..", "..", "packages", "cli", "index.js"))
 	local2 := data
-	local2.CLI, local2.Mygo, local2.ConfigImport = "", "go run github.com/egoist/mygo/cmd/mygo", moduleSpecifier(local, cli)
+	local2.CLI, local2.Mygo, local2.ConfigImport = "", "go run github.com/Gaurav-Gosain/mygo/cmd/mygo", moduleSpecifier(local, cli)
 	if err := writeTemplate(local, webTemplate, local2); err != nil {
 		t.Fatal(err)
 	}
@@ -306,7 +306,7 @@ func TestNativeTemplate(t *testing.T) {
 	}
 	checkout, _ := filepath.Abs(filepath.Join("..", ".."))
 	sum, _ := os.ReadFile(filepath.Join(checkout, "go.sum"))
-	gomod := "module demo-app\n\ngo " + goVersion() + "\n\nrequire github.com/egoist/mygo v0.0.0\n\nreplace github.com/egoist/mygo => " + checkout + "\n"
+	gomod := "module demo-app\n\ngo " + goVersion() + "\n\nrequire github.com/Gaurav-Gosain/mygo v0.0.0\n\nreplace github.com/Gaurav-Gosain/mygo => " + checkout + "\n"
 	if os.WriteFile(filepath.Join(dir, "go.mod"), []byte(gomod), 0o644) != nil || os.WriteFile(filepath.Join(dir, "go.sum"), sum, 0o644) != nil {
 		t.Fatal("cannot write the module")
 	}
@@ -347,8 +347,8 @@ func TestExtraLDFlags(t *testing.T) {
 func TestPackageFlags(t *testing.T) {
 	c := &Config{Name: "Bob's App", Version: "1.0.0", Identifier: "com.example.bob", URLSchemes: []string{"bob", "bob-dev"}}
 	got := packageFlags(c)
-	want := ` -X "github.com/egoist/mygo.packageName=Bob's App" -X github.com/egoist/mygo.packageVersion=1.0.0` +
-		` -X github.com/egoist/mygo.packageIdentifier=com.example.bob -X github.com/egoist/mygo.packageURLSchemes=bob,bob-dev`
+	want := ` -X "github.com/Gaurav-Gosain/mygo.packageName=Bob's App" -X github.com/Gaurav-Gosain/mygo.packageVersion=1.0.0` +
+		` -X github.com/Gaurav-Gosain/mygo.packageIdentifier=com.example.bob -X github.com/Gaurav-Gosain/mygo.packageURLSchemes=bob,bob-dev`
 	if got != want {
 		t.Errorf("packageFlags =\n%s\nwant\n%s", got, want)
 	}

@@ -7,8 +7,8 @@ import (
 	"slices"
 	"sync"
 
-	"github.com/egoist/mygo/internal/scene"
-	"github.com/egoist/mygo/internal/vec"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/vec"
 )
 
 // Path is a vector shape, in DIPs, for Painter.FillPath and StrokePath:

@@ -3,9 +3,9 @@
 package ui
 
 import (
-	"github.com/egoist/mygo/internal/gpu/gl"
-	"github.com/egoist/mygo/internal/platform"
-	"github.com/egoist/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/internal/gpu/gl"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
 )
 
 // newGPURenderer returns an OpenGL renderer for a surface drawing in a

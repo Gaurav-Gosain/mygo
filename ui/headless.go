@@ -8,11 +8,11 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/egoist/mygo/i18n"
-	"github.com/egoist/mygo/internal/platform"
-	"github.com/egoist/mygo/internal/raster"
-	"github.com/egoist/mygo/internal/scene"
-	"github.com/egoist/mygo/transfer"
+	"github.com/Gaurav-Gosain/mygo/i18n"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/raster"
+	"github.com/Gaurav-Gosain/mygo/internal/scene"
+	"github.com/Gaurav-Gosain/mygo/transfer"
 )
 
 // headless renders frames in memory with the software renderer.

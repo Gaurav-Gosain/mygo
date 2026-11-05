@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/egoist/mygo/internal/platform"
+	"github.com/Gaurav-Gosain/mygo/internal/platform"
 )
 
 // TestTouchGesture checks what fingers on a touchscreen do: taps click,

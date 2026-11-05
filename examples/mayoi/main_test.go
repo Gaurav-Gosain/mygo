@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/egoist/mygo/plugins/game"
-	"github.com/egoist/mygo/ui"
+	"github.com/Gaurav-Gosain/mygo/plugins/game"
+	"github.com/Gaurav-Gosain/mygo/ui"
 )
 
 // inPlay returns a world in play, without enemies coming for a while.

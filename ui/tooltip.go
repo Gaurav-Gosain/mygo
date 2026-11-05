@@ -175,3 +175,19 @@ func (rt *engine) showTooltip(c *context) uint64 {
 	}
 	return t.shown
 }
+
+// typingHidesTip hides the tip of the element under the pointer as a key
+// goes down, as GTK and AppKit do: a person who types reads what they type,
+// and a tip left over a text field covers it. The tip stays hidden until
+// the pointer leaves the element and comes back. A tip the keyboard focus
+// brought stays, as the keys moved the focus to show it.
+func (rt *engine) typingHidesTip() {
+	t := &rt.tips
+	if t.hover == 0 || t.dismissed == t.hover {
+		return
+	}
+	t.dismissed = t.hover
+	if t.shown == t.hover && !t.byFocus {
+		rt.requestFrame()
+	}
+}

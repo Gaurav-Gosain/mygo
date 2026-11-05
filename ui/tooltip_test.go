@@ -189,3 +189,33 @@ func TestTooltipInnermost(t *testing.T) {
 		t.Errorf("over the toolbar: texts %q", tt.Texts())
 	}
 }
+
+// A key hides the tip under the pointer: the tip of a button by a text field
+// covers the text a person types. It comes back as the pointer leaves and
+// comes back.
+func TestTooltipHidesOnKey(t *testing.T) {
+	tt, now := clockTester(func(c *context) {
+		coreColumn(c).Padding(80, 40).Gap(20).Children(func() {
+			coreButton(c, "Open").Label("open").Tooltip("Opens a file")
+		})
+	}, 400, 300)
+	tick := ticker(tt, now)
+	o, _ := tt.Find("open")
+	tt.Move(o.X+o.W/2, o.Y+o.H/2)
+	tick(time.Second)
+	if !tt.HasText("Opens a file") {
+		t.Fatal("no tip once the pointer rested")
+	}
+	tt.Key(0, KeyA)
+	tick(time.Second)
+	if tt.HasText("Opens a file") {
+		t.Error("the tip shows after a key")
+	}
+	tt.Move(390, 290)
+	tt.Frame()
+	tt.Move(o.X+o.W/2, o.Y+o.H/2)
+	tick(time.Second)
+	if !tt.HasText("Opens a file") {
+		t.Error("no tip as the pointer comes back after a key")
+	}
+}

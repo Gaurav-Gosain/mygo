@@ -78,6 +78,7 @@ func (rt *engine) event(ev platform.SurfaceEvent) (taken bool) {
 		rt.zoom(float32(ev.Scale), Modifiers(ev.Mods))
 	case platform.KeyPressed:
 		rt.modsChanged(Modifiers(ev.Mods))
+		rt.typingHidesTip()
 		taken = rt.keyDownPhysical(Modifiers(ev.Mods), Key(ev.Key), Key(ev.PhysicalKey), ev.Repeat)
 	case platform.ModifiersChanged:
 		rt.modsChanged(Modifiers(ev.Mods))
@@ -96,6 +97,8 @@ func (rt *engine) event(ev platform.SurfaceEvent) (taken bool) {
 	case platform.TextComposition:
 		rt.editEvent(rt.replaced(editEvent{kind: editCompose, text: ev.Text, caret: ev.Caret}, ev))
 	case platform.SurfaceCommand:
+		// A menu accelerator comes as a command, not as a key.
+		rt.typingHidesTip()
 		rt.editEvent(editEvent{kind: editCommand, text: ev.Text})
 	case platform.SurfaceFocus:
 		rt.windowFocused = true

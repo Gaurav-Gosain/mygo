@@ -191,12 +191,20 @@ func TestTooltipInnermost(t *testing.T) {
 }
 
 // A key hides the tip under the pointer: the tip of a button by a text field
-// covers the text a person types. It comes back as the pointer leaves and
-// comes back.
+// covers the text a person types. No tip shows until the pointer moves, also
+// that of an element the key put under it (another view at the same place).
 func TestTooltipHidesOnKey(t *testing.T) {
+	other := false
 	tt, now := clockTester(func(c *context) {
 		coreColumn(c).Padding(80, 40).Gap(20).Children(func() {
-			coreButton(c, "Open").Label("open").Tooltip("Opens a file")
+			if other {
+				// Another element at the same place.
+				coreBox(c).Children(func() {
+					coreButton(c, "Open").Label("close").Tooltip("Closes the file")
+				})
+			} else {
+				coreButton(c, "Open").Label("open").Tooltip("Opens a file")
+			}
 		})
 	}, 400, 300)
 	tick := ticker(tt, now)
@@ -211,11 +219,23 @@ func TestTooltipHidesOnKey(t *testing.T) {
 	if tt.HasText("Opens a file") {
 		t.Error("the tip shows after a key")
 	}
-	tt.Move(390, 290)
-	tt.Frame()
-	tt.Move(o.X+o.W/2, o.Y+o.H/2)
+	other = true
 	tick(time.Second)
-	if !tt.HasText("Opens a file") {
-		t.Error("no tip as the pointer comes back after a key")
+	tick(time.Second)
+	if tt.HasText("Closes the file") {
+		t.Error("the tip of the element the key put under the pointer shows")
+	}
+	tt.Move(o.X+o.W/2+1, o.Y+o.H/2)
+	tick(time.Second)
+	if !tt.HasText("Closes the file") {
+		t.Error("no tip as the pointer moves after a key")
+	}
+	// Escape still hides a tip until the pointer leaves, a key or not.
+	tt.Key(0, KeyEscape)
+	tick(time.Second)
+	tt.Move(o.X+o.W/2+2, o.Y+o.H/2)
+	tick(time.Second)
+	if tt.HasText("Closes the file") {
+		t.Error("the tip shows again after Escape as the pointer moves on its element")
 	}
 }

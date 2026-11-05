@@ -31,6 +31,9 @@ type tooltips struct {
 	dismissed uint64
 	// lastShown is when a tip last showed, or went.
 	lastShown time.Time
+	// typed tells that a key went down since the pointer last moved: no
+	// tip shows under the pointer until it moves (typingHidesTip).
+	typed bool
 }
 
 // TooltipBase shows a tip without a look by anchor: fn styles the tip and
@@ -139,6 +142,13 @@ func (rt *engine) showTooltip(c *context) uint64 {
 			break
 		}
 	}
+	under := hover
+	if t.typed {
+		// Not even under an element that came under the pointer since,
+		// as the view changed for the key (a new pane, another
+		// workspace): the pointer rests there by chance.
+		hover = 0
+	}
 	if hover != t.hover {
 		t.hover, t.hoverSince = hover, now
 	}
@@ -149,7 +159,7 @@ func (rt *engine) showTooltip(c *context) uint64 {
 	if focus != t.focus {
 		t.focus, t.focusSince = focus, now
 	}
-	if t.dismissed != hover && t.dismissed != focus {
+	if t.dismissed != under && t.dismissed != focus {
 		t.dismissed = 0
 	}
 	if rt.pressed != nil && hover != 0 {
@@ -176,18 +186,22 @@ func (rt *engine) showTooltip(c *context) uint64 {
 	return t.shown
 }
 
-// typingHidesTip hides the tip of the element under the pointer as a key
-// goes down, as GTK and AppKit do: a person who types reads what they type,
-// and a tip left over a text field covers it. The tip stays hidden until
-// the pointer leaves the element and comes back. A tip the keyboard focus
-// brought stays, as the keys moved the focus to show it.
-func (rt *engine) typingHidesTip() {
+// typingHidesTip hides the tip under the pointer as a key goes down, as
+// GTK and AppKit do: a person who types reads what they type, and a tip
+// left over a text field covers it. No tip shows under the pointer until it
+// moves, also over an element the key put there. Escape hides the tip that
+// shows until the pointer leaves its element, as before. A tip the keyboard
+// focus brought stays, as the keys moved the focus to show it.
+func (rt *engine) typingHidesTip(escape bool) {
 	t := &rt.tips
-	if t.hover == 0 || t.dismissed == t.hover {
+	if escape && t.shown != 0 {
+		t.dismissed = t.shown
+	}
+	if t.typed {
 		return
 	}
-	t.dismissed = t.hover
-	if t.shown == t.hover && !t.byFocus {
+	t.typed = true
+	if t.shown != 0 && !t.byFocus {
 		rt.requestFrame()
 	}
 }

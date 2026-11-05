@@ -53,6 +53,10 @@ func (rt *engine) event(ev platform.SurfaceEvent) (taken bool) {
 			rt.requestFrame()
 		}
 	case platform.PointerMove:
+		if x != rt.pointerX || y != rt.pointerY {
+			// The pointer moved: the tips a key hid may show again.
+			rt.tips.typed = false
+		}
 		rt.pointerMove(x, y)
 	case platform.PointerDown:
 		rt.pointerMove(x, y)
@@ -78,7 +82,7 @@ func (rt *engine) event(ev platform.SurfaceEvent) (taken bool) {
 		rt.zoom(float32(ev.Scale), Modifiers(ev.Mods))
 	case platform.KeyPressed:
 		rt.modsChanged(Modifiers(ev.Mods))
-		rt.typingHidesTip()
+		rt.typingHidesTip(Key(ev.Key) == KeyEscape)
 		taken = rt.keyDownPhysical(Modifiers(ev.Mods), Key(ev.Key), Key(ev.PhysicalKey), ev.Repeat)
 	case platform.ModifiersChanged:
 		rt.modsChanged(Modifiers(ev.Mods))
@@ -98,7 +102,7 @@ func (rt *engine) event(ev platform.SurfaceEvent) (taken bool) {
 		rt.editEvent(rt.replaced(editEvent{kind: editCompose, text: ev.Text, caret: ev.Caret}, ev))
 	case platform.SurfaceCommand:
 		// A menu accelerator comes as a command, not as a key.
-		rt.typingHidesTip()
+		rt.typingHidesTip(false)
 		rt.editEvent(editEvent{kind: editCommand, text: ev.Text})
 	case platform.SurfaceFocus:
 		rt.windowFocused = true

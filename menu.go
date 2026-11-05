@@ -569,6 +569,11 @@ func menuItemClicked(uid int, win *Window) {
 	case MenuItemRadio:
 		it.SetChecked(true)
 	}
+	if win != nil {
+		if c := win.top().conn; c != nil && c.MenuChosen != nil {
+			c.MenuChosen()
+		}
+	}
 	performRole(it.Role, win)
 	if it.Click != nil {
 		// The context menu of a web view's page is its window's.

@@ -87,6 +87,11 @@ type Conn struct {
 	// TitleBarChanged when TitleBar does.
 	ThemeChanged    func()
 	TitleBarChanged func()
+	// MenuChosen is called as a menu item of the window runs, by its
+	// shortcut or a click: a shortcut the menu takes never reaches Event
+	// as a key, and the content hides the tip under the pointer as for
+	// one.
+	MenuChosen func()
 	// LocaleChanged is called when Locale or Region changed, for the
 	// content to build its frame anew.
 	LocaleChanged func()

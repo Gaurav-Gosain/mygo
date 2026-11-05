@@ -84,6 +84,7 @@ func (v *Content) AttachContent(conn *surface.Conn) {
 		rt.themeChanged()
 	}
 	conn.TitleBarChanged = rt.requestFrame
+	conn.MenuChosen = func() { rt.typingHidesTip(false) }
 	conn.Changed = rt.changed
 	conn.LocaleChanged = func() {
 		h.textLanguage()

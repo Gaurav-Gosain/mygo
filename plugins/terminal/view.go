@@ -188,7 +188,16 @@ type view struct {
 
 	focused    bool
 	blinkStart time.Time
-	caretCell  [2]int // the cursor's cell, for input methods
+	// blinkFor is how long the cursor blinks after blinkStart before it
+	// stays on, as the desktop says (Preferences.CaretBlinkTimeout);
+	// blinkAt is the cell the cursor was on when the last frame built,
+	// whose change restarts the blinking.
+	blinkFor time.Duration
+	blinkAt  [2]int
+	// reblink asks the next frame to restart the blinking, after input
+	// sent between frames: the blink follows the frames' clock.
+	reblink   bool
+	caretCell [2]int // the cursor's cell, for input methods
 	// selecting tells that the primary button selects; reporting that a
 	// press went to the program, which gets the release too.
 	selecting, reporting bool
@@ -326,9 +335,14 @@ func (v *view) build(c *ui.Context, e ui.Element) {
 		// Input methods compose where the cursor is now, which the last
 		// frame may not show yet.
 		v.caretCell = [2]int{v.cursor.X, v.cursor.Y}
+		x, y := t.term.Cursor()
 		if t.term.AtBottom() {
-			x, y := t.term.Cursor()
 			v.caretCell = [2]int{x, y}
+		}
+		// Output that moves the cursor blinks it again, as a key does.
+		if at := [2]int{x, y}; at != v.blinkAt {
+			v.blinkAt = at
+			v.blinkStart = c.Now()
 		}
 	}
 	copied := t.clipOut
@@ -361,6 +375,10 @@ func (v *view) build(c *ui.Context, e ui.Element) {
 		v.reads = append(v.reads, reads...)
 		v.answerReads(c, term)
 	}
+	if v.reblink {
+		v.reblink = false
+		v.blinkStart = c.Now()
+	}
 	if focused != v.focused {
 		v.focused = focused
 		v.blinkStart = c.Now()
@@ -369,10 +387,18 @@ func (v *view) build(c *ui.Context, e ui.Element) {
 			v.preedit, v.pending = "", nil
 		}
 	}
-	// The cursor blinks, every 600 ms, while the terminal has the focus.
+	// The cursor blinks, every 600 ms, while the terminal has the focus,
+	// and stays on once it has blinked for blinkFor with no key, focus or
+	// move to restart it, as GTK's does: an idle terminal draws nothing.
+	v.blinkFor = c.Preferences().CaretBlinkTimeout
 	if v.focused && v.cursor.Blinking && v.cursor.Visible {
 		since := c.Now().Sub(v.blinkStart)
-		c.After(blinkPeriod - since%blinkPeriod)
+		next := blinkPeriod - since%blinkPeriod
+		// The toggle that shows the cursor is always drawn, one that would
+		// hide it only before the timeout.
+		if blinkOff(since, v.blinkFor) || since+next < v.blinkFor || v.blinkFor < 0 {
+			c.After(next)
+		}
 	}
 	if v.ticking {
 		c.After(40 * time.Millisecond)
@@ -380,6 +406,16 @@ func (v *view) build(c *ui.Context, e ui.Element) {
 }
 
 const blinkPeriod = 600 * time.Millisecond
+
+// blinkOff tells that a blinking cursor is in its off phase, since after
+// it started to blink. It blinks for timeout, or for ever when that is
+// negative.
+func blinkOff(since, timeout time.Duration) bool {
+	if timeout >= 0 && since >= timeout {
+		return false
+	}
+	return since%(2*blinkPeriod) >= blinkPeriod
+}
 
 // answerReads answers the program's reads of the clipboard as the frame
 // builds, in order, since an OSC 52 reply doesn't tell which read it
@@ -877,7 +913,7 @@ func (v *view) typed(text string) {
 // as Ghostty does when it sends something.
 func (v *view) sendKey(k vt.KeyEvent) {
 	if v.encodeKey(k, true) {
-		v.blinkStart = time.Now()
+		v.reblink = true
 	}
 }
 
@@ -919,7 +955,7 @@ func (v *view) sendText(text string) {
 	}
 	t.mu.Unlock()
 	t.Send([]byte(text))
-	v.blinkStart = time.Now()
+	v.reblink = true
 }
 
 // copy copies the selection, letting go of it with clear, and reports

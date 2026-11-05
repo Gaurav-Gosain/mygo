@@ -204,14 +204,20 @@ func (e *node) paintInput(p *Painter) {
 		rt := e.c.rt
 		phase := e.c.now.Sub(rt.blinkStart)
 		const blink = 530 * time.Millisecond
-		if (phase/blink)%2 == 0 && ed.caretWidth > 0 {
+		// The caret blinks for Preferences.CaretBlinkTimeout, then stays
+		// on: the toggle that shows it is always drawn, one that would
+		// hide it only before the timeout.
+		timeout := rt.preferences().CaretBlinkTimeout
+		ends := timeout >= 0
+		on := (ends && phase >= timeout) || (phase/blink)%2 == 0
+		if on && ed.caretWidth > 0 {
 			x, y, h := l.CaretAt(text.CaretPosition{Index: ed.displayIndex(ed.caret) + ed.composeCaret, Affinity: ed.caretAffinity})
 			p.add(scene.Op{Kind: scene.OpFill, Rect: p.snap(Rect{ox + x, oy + y, 0, h}), Color: t.Accent.scene(), Wide: p.wide(t.Accent, Color{}, Color{}), Opacity: p.opacity})
 			op := &p.s.Ops[len(p.s.Ops)-1]
 			op.Rect.W = max(round(ed.caretWidth*p.scale), 1)
 		}
-		if phase < 30*time.Second {
-			e.c.After(blink - phase%blink)
+		if next := blink - phase%blink; !on || !ends || phase+next < timeout {
+			e.c.After(next)
 		}
 	}
 	p.popClip()

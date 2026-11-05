@@ -1108,6 +1108,10 @@ type Preferences struct {
 	// TextScale is how many times larger than usual text should be, as
 	// Windows's and GNOME's text size settings say; 0 or 1 for usual.
 	TextScale float64
+	// CaretBlinkTimeout is how long a caret blinks after the last key
+	// before it stays on, as GTK's gtk-cursor-blink-timeout; 0 where the
+	// desktop does not say, negative for no end.
+	CaretBlinkTimeout time.Duration
 }
 
 // FontRendering is how the desktop's settings say to rasterize text, as

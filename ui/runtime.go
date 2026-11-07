@@ -491,8 +491,9 @@ type shortcutReg struct {
 	// retried marks a key delivered, or left unrouted, in the frame after
 	// the one it came to (settleKeys): it is not retried again.
 	retried bool
-	// seq is the number of the press delivered (InputEvent.Seq).
-	seq uint64
+	// seq is the number of the press delivered (InputEvent.Seq), focus
+	// the element with the focus as it was pressed (pressedKey).
+	seq, focus uint64
 }
 
 type keyEvent struct {
@@ -505,6 +506,10 @@ type keyEvent struct {
 type pressedKey struct {
 	keyEvent
 	seq uint64
+	// focus is the element that had the focus as the key was pressed: a
+	// key that waits for a later frame goes where it was typed
+	// (routeKeys).
+	focus uint64
 }
 
 func newRuntime(view func(*context), h host) *engine {

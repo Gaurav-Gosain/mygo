@@ -658,9 +658,12 @@ func (rt *engine) scrollKey(mods Modifiers, key Key) bool {
 
 // focusChain returns the focused element and its ancestors, innermost
 // first.
-func (rt *engine) focusChain() []uint64 {
+func (rt *engine) focusChain() []uint64 { return rt.focusChainOf(rt.focused) }
+
+// focusChainOf is focusChain for the focus on element id.
+func (rt *engine) focusChainOf(id uint64) []uint64 {
 	var chain []uint64
-	for s := rt.states[rt.focused]; s != nil; s = rt.states[s.parent] {
+	for s := rt.states[id]; s != nil; s = rt.states[s.parent] {
 		chain = append(chain, s.id)
 		if s.parent == 0 {
 			break
@@ -796,7 +799,7 @@ func (rt *engine) keyDownPhysical(mods Modifiers, key, physical Key, repeat bool
 	if !rt.claimed(k) && rt.scrollKey(mods, key) {
 		return false
 	}
-	rt.keys = append(rt.keys, pressedKey{k, rt.pressSeq})
+	rt.keys = append(rt.keys, pressedKey{k, rt.pressSeq, rt.focused})
 	rt.requestFrame()
 	return false
 }
@@ -897,8 +900,15 @@ func (rt *engine) routeKeys() {
 	}
 	chain := rt.focusChain()
 	route := func(k pressedKey, retried bool) bool {
-		r := shortcutReg{mods: k.mods, key: k.key, retried: retried, seq: k.seq}
-		if target, found := routeKey(rt.regs, chain, k.keyEvent); found {
+		r := shortcutReg{mods: k.mods, key: k.key, retried: retried, seq: k.seq, focus: k.focus}
+		// A key that waited goes where it was typed, while that element
+		// is still there: the focus may have moved since, as the key
+		// before it moved it.
+		at := chain
+		if k.focus != rt.focused && rt.states[k.focus] != nil {
+			at = rt.focusChainOf(k.focus)
+		}
+		if target, found := routeKey(rt.regs, at, k.keyEvent); found {
 			if slices.ContainsFunc(rt.delivered, func(d shortcutReg) bool { return d.id == target }) {
 				return false
 			}
@@ -971,8 +981,12 @@ func (rt *engine) settleKeys() {
 	chain := rt.focusChain()
 	for _, r := range rt.unrouted {
 		k := keyEvent{r.mods, r.key}
-		if _, found := routeKey(rt.nextRegs, chain, k); found && !r.retried {
-			rt.retried = append(rt.retried, pressedKey{k, r.seq}) // runFrame asks for the frame
+		at := chain
+		if r.focus != 0 && r.focus != rt.focused && rt.states[r.focus] != nil {
+			at = rt.focusChainOf(r.focus) // where it was typed (routeKeys)
+		}
+		if _, found := routeKey(rt.nextRegs, at, k); found && !r.retried {
+			rt.retried = append(rt.retried, pressedKey{k, r.seq, r.focus}) // runFrame asks for the frame
 		} else if !found && k == (keyEvent{0, KeyEscape}) {
 			rt.host.escape()
 		}
@@ -1068,7 +1082,7 @@ func (rt *engine) commandKey(ev editEvent, ed *editor) bool {
 	if seq == 0 {
 		seq = rt.nextKeySeq() // a menu's command, of no press seen
 	}
-	rt.keys = append(rt.keys, pressedKey{k, seq})
+	rt.keys = append(rt.keys, pressedKey{k, seq, rt.focused})
 	rt.requestFrame()
 	return true
 }

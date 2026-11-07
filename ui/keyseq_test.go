@@ -79,3 +79,40 @@ func TestKeySeqKeepsADoubleLetter(t *testing.T) {
 		t.Fatalf("six presses have %d sequence numbers: list %v, handler %v", got, list, term)
 	}
 }
+
+// TestKeyWaitingKeepsItsFocus types two keys before a frame into a list
+// that reads them by shortcut, whose first key moves the focus to a text
+// input. An element takes one key a frame, so the second waits; it still
+// goes to the list it was typed in, not to the input that has the focus by
+// the next frame, where nothing took it and it was lost.
+func TestKeyWaitingKeepsItsFocus(t *testing.T) {
+	text := ""
+	var got []Key
+	toField := false
+	tt := coreNewTester(func(c *context) {
+		list := coreBox(c).Key("list").Size(100, 50).Focusable()
+		if !toField {
+			list.Focus()
+		}
+		for _, k := range []Key{KeyM, KeyO} {
+			if list.Shortcut(0, k) {
+				got = append(got, k)
+				toField = true
+			}
+		}
+		in := coreTextAreaBase(c, &text).Size(200, 40)
+		if toField {
+			in.Focus()
+		}
+	}, 300, 100)
+	tt.Frame()
+	tt.rt.event(platform.SurfaceEvent{Kind: platform.KeyPressed, Key: platform.Key(KeyM)})
+	tt.rt.event(platform.SurfaceEvent{Kind: platform.KeyReleased, Key: platform.Key(KeyM)})
+	tt.rt.event(platform.SurfaceEvent{Kind: platform.KeyPressed, Key: platform.Key(KeyM)})
+	tt.rt.event(platform.SurfaceEvent{Kind: platform.KeyReleased, Key: platform.Key(KeyM)})
+	tt.Frame()
+	tt.Frame()
+	if len(got) != 2 {
+		t.Fatalf("the list got %v, want both m", got)
+	}
+}

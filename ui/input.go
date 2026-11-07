@@ -83,6 +83,8 @@ func (rt *engine) event(ev platform.SurfaceEvent) (taken bool) {
 	case platform.KeyPressed:
 		rt.modsChanged(Modifiers(ev.Mods))
 		rt.typingHidesTip(Key(ev.Key) == KeyEscape)
+		rt.pressSeq, rt.pressTexted = rt.nextKeySeq(), false
+		rt.pressOf(Key(ev.Key), Key(ev.PhysicalKey), rt.pressSeq)
 		taken = rt.keyDownPhysical(Modifiers(ev.Mods), Key(ev.Key), Key(ev.PhysicalKey), ev.Repeat)
 	case platform.ModifiersChanged:
 		rt.modsChanged(Modifiers(ev.Mods))
@@ -93,11 +95,12 @@ func (rt *engine) event(ev platform.SurfaceEvent) (taken bool) {
 			key = physical
 		}
 		delete(rt.byPosition, physical)
+		seq := rt.releaseOf(Key(ev.Key), physical)
 		if h := rt.focusHandler(); h != nil {
-			rt.deliver(h, InputEvent{Kind: InputKeyUp, Key: key, PhysicalKey: physical, Mods: Modifiers(ev.Mods)})
+			rt.deliver(h, InputEvent{Kind: InputKeyUp, Key: key, PhysicalKey: physical, Mods: Modifiers(ev.Mods), Seq: seq})
 		}
 	case platform.TextInput:
-		rt.editEvent(rt.replaced(editEvent{kind: editInsert, text: ev.Text}, ev))
+		rt.editEvent(rt.replaced(editEvent{kind: editInsert, text: ev.Text, seq: rt.textSeq()}, ev))
 	case platform.TextComposition:
 		rt.editEvent(rt.replaced(editEvent{kind: editCompose, text: ev.Text, caret: ev.Caret}, ev))
 	case platform.SurfaceCommand:
@@ -114,6 +117,7 @@ func (rt *engine) event(ev platform.SurfaceEvent) (taken bool) {
 		// Keys let go of elsewhere never come back up here.
 		rt.modsChanged(0)
 		clear(rt.byPosition)
+		clear(rt.pressSeqs)
 		if p := rt.pressed; p != nil {
 			// The release will not come: an element taking its input
 			// gets one now.
@@ -719,7 +723,7 @@ func (rt *engine) keyDownPhysical(mods Modifiers, key, physical Key, repeat bool
 	if key == KeyEscape && mods == 0 && rt.dragCancel() {
 		return true
 	}
-	if h := rt.focusHandler(); h != nil && !rt.claimed(k) && rt.deliver(h, InputEvent{Kind: InputKeyDown, Key: key, PhysicalKey: physical, Mods: mods, Repeat: repeat}) {
+	if h := rt.focusHandler(); h != nil && !rt.claimed(k) && rt.deliver(h, InputEvent{Kind: InputKeyDown, Key: key, PhysicalKey: physical, Mods: mods, Repeat: repeat, Seq: rt.pressSeq}) {
 		rt.blinkStart = rt.now()
 		return true
 	}
@@ -792,7 +796,7 @@ func (rt *engine) keyDownPhysical(mods Modifiers, key, physical Key, repeat bool
 	if !rt.claimed(k) && rt.scrollKey(mods, key) {
 		return false
 	}
-	rt.keys = append(rt.keys, k)
+	rt.keys = append(rt.keys, pressedKey{k, rt.pressSeq})
 	rt.requestFrame()
 	return false
 }
@@ -892,9 +896,9 @@ func (rt *engine) routeKeys() {
 		return
 	}
 	chain := rt.focusChain()
-	route := func(k keyEvent, retried bool) bool {
-		r := shortcutReg{mods: k.mods, key: k.key, retried: retried}
-		if target, found := routeKey(rt.regs, chain, k); found {
+	route := func(k pressedKey, retried bool) bool {
+		r := shortcutReg{mods: k.mods, key: k.key, retried: retried, seq: k.seq}
+		if target, found := routeKey(rt.regs, chain, k.keyEvent); found {
 			if slices.ContainsFunc(rt.delivered, func(d shortcutReg) bool { return d.id == target }) {
 				return false
 			}
@@ -906,7 +910,7 @@ func (rt *engine) routeKeys() {
 		return true
 	}
 	// Keys retried came before those pressed since.
-	var later []keyEvent
+	var later []pressedKey
 	for i, k := range rt.retried {
 		if !route(k, true) {
 			later = append(later, rt.retried[i:]...)
@@ -968,7 +972,7 @@ func (rt *engine) settleKeys() {
 	for _, r := range rt.unrouted {
 		k := keyEvent{r.mods, r.key}
 		if _, found := routeKey(rt.nextRegs, chain, k); found && !r.retried {
-			rt.retried = append(rt.retried, k) // runFrame asks for the frame
+			rt.retried = append(rt.retried, pressedKey{k, r.seq}) // runFrame asks for the frame
 		} else if !found && k == (keyEvent{0, KeyEscape}) {
 			rt.host.escape()
 		}
@@ -982,6 +986,7 @@ func (rt *engine) shortcut(id uint64, mods Modifiers, key Key) bool {
 	rt.nextRegs = append(rt.nextRegs, shortcutReg{id: id, mods: mods, key: key})
 	for i, d := range rt.delivered {
 		if d.id == id && d.mods == mods && d.key == key {
+			rt.shortcutSeq = d.seq
 			rt.delivered = append(rt.delivered[:i], rt.delivered[i+1:]...)
 			rt.consumed = true
 			return true
@@ -1009,7 +1014,7 @@ func (rt *engine) editEvent(ev editEvent) {
 	}
 	if h := rt.focusHandler(); h != nil && h.editor == nil {
 		kind := map[editKind]InputKind{editInsert: InputText, editCompose: InputCompose, editCommand: InputCommand}[ev.kind]
-		handled := kind != 0 && rt.deliver(h, InputEvent{Kind: kind, Text: ev.text, Caret: ev.caret})
+		handled := kind != 0 && rt.deliver(h, InputEvent{Kind: kind, Text: ev.text, Caret: ev.caret, Seq: ev.seq})
 		if !handled && kind == InputCommand && ev.text == "pasteAndMatchStyle" {
 			// A handler of text without styles pastes it as Paste does.
 			handled = rt.deliver(h, InputEvent{Kind: kind, Text: "paste"})
@@ -1059,7 +1064,11 @@ func (rt *engine) commandKey(ev editEvent, ed *editor) bool {
 	if runtime.GOOS != "darwin" || ev.kind != editCommand || !ok || ed != nil && ed.wants(k) {
 		return false
 	}
-	rt.keys = append(rt.keys, k)
+	seq := ev.seq
+	if seq == 0 {
+		seq = rt.nextKeySeq() // a menu's command, of no press seen
+	}
+	rt.keys = append(rt.keys, pressedKey{k, seq})
 	rt.requestFrame()
 	return true
 }

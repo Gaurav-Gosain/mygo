@@ -703,7 +703,7 @@ func (v *view) input(ev ui.InputEvent) bool {
 
 func (v *view) keyDown(ev ui.InputEvent) bool {
 	t := v.t
-	if on := t.opts.OnKey; on != nil && on(ev.Mods, ev.Key) {
+	if on := t.opts.OnKeyEvent; on != nil && on(ev) || t.opts.OnKeyEvent == nil && t.opts.OnKey != nil && t.opts.OnKey(ev.Mods, ev.Key) {
 		k, _ := vtKey(ev.Key)
 		v.pending = &pendingKey{key: k, taken: true}
 		return true

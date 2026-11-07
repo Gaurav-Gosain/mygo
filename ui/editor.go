@@ -27,6 +27,9 @@ type editEvent struct {
 	// to instead of the selection, as an input method asked.
 	replace  bool
 	from, to int
+	// seq is the number of the key press that typed an insertion
+	// (InputEvent.Seq).
+	seq uint64
 }
 
 // editor is the state of a text input: the text, the caret, the selection,

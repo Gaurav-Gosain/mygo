@@ -288,9 +288,16 @@ type engine struct {
 	// shortcuts that frame built take in the next one; unrouted, those
 	// the frame being built gave no shortcut, or gave one the view no
 	// longer asks for (routeKeys, settleKeys).
-	keys, retried []keyEvent
+	keys, retried []pressedKey
 	unrouted      []shortcutReg
-	menu          menuState
+	// keySeq numbers the key presses (InputEvent.Seq); pressSeq is the
+	// number of the last press, whose text takes it once (textSeq), and
+	// shortcutSeq that of the key the last Shortcut reporting true matched.
+	keySeq, pressSeq, shortcutSeq uint64
+	pressTexted                   bool
+	// pressSeqs is the number of each key held down, for its release.
+	pressSeqs map[Key]uint64
+	menu      menuState
 	// windowFocused tells that the window has the keyboard focus, which
 	// windowFocus reads; focusRead, that the last frame read it, so that a
 	// change of it draws a frame.
@@ -484,11 +491,20 @@ type shortcutReg struct {
 	// retried marks a key delivered, or left unrouted, in the frame after
 	// the one it came to (settleKeys): it is not retried again.
 	retried bool
+	// seq is the number of the press delivered (InputEvent.Seq).
+	seq uint64
 }
 
 type keyEvent struct {
 	mods Modifiers
 	key  Key
+}
+
+// pressedKey is a key waiting for the shortcuts, with the number of its
+// press (InputEvent.Seq).
+type pressedKey struct {
+	keyEvent
+	seq uint64
 }
 
 func newRuntime(view func(*context), h host) *engine {

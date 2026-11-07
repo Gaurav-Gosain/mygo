@@ -256,6 +256,9 @@ type Options struct {
 	// it, as does what it sends with Send. A key that only types text may
 	// come as its text alone, as on Linux, which OnKey does not see.
 	OnKey func(mods ui.Modifiers, key ui.Key) bool
+	// OnKeyEvent is OnKey with the whole key down event, whose Seq tells
+	// two presses of one key apart. When set, it runs in place of OnKey.
+	OnKeyEvent func(ev ui.InputEvent) bool
 	// OnScroll sees the wheel scroll the view by whole rows, negative up
 	// (a mouse wheel's notch is three, or on Windows as many as its "lines
 	// to scroll" setting asks), before the terminal scrolls its

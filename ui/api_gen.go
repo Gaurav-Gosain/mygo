@@ -494,11 +494,6 @@ func (_handle *Context) SetZoom(z float32) {
 	_ctx.SetZoom(z)
 }
 
-// Shortcut reports whether the key with exactly the modifiers mods was
-// pressed, wherever the keyboard focus is, unless a focused element
-// handled it first: a focused button or link takes Enter and Space, and a
-// check box, switch or radio button Space, so that Enter can press a
-// dialog's default button.
 func (_handle *Context) Shortcut(mods Modifiers, key Key) bool {
 	_ctx := _handle.build()
 	if _ctx == nil {
@@ -506,6 +501,23 @@ func (_handle *Context) Shortcut(mods Modifiers, key Key) bool {
 	}
 	_ctx.rt.applyInputs()
 	return _ctx.Shortcut(mods, key)
+}
+
+// Shortcut reports whether the key with exactly the modifiers mods was
+// pressed, wherever the keyboard focus is, unless a focused element
+// handled it first: a focused button or link takes Enter and Space, and a
+// check box, switch or radio button Space, so that Enter can press a
+// dialog's default button.
+// ShortcutSeq returns the number of the key press (InputEvent.Seq) that the
+// last Shortcut, of the window or of an element, to report true matched,
+// and 0 before any did. Two presses of one key have two numbers, and a key
+// a handler took (HandleInput) never comes to a shortcut with its number.
+func (_handle *Context) ShortcutSeq() uint64 {
+	_ctx := _handle.build()
+	if _ctx == nil {
+		return 0
+	}
+	return _ctx.ShortcutSeq()
 }
 
 // Size returns the size of the window's content in DIPs.

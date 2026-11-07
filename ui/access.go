@@ -587,7 +587,7 @@ func (rt *engine) accessAction(ev platform.SurfaceEvent) {
 		if ev.Action == platform.AccessDecrement {
 			k = down
 		}
-		rt.keys = append(rt.keys, keyEvent{0, k})
+		rt.keys = append(rt.keys, pressedKey{keyEvent{0, k}, rt.nextKeySeq()})
 	case platform.AccessExpand, platform.AccessCollapse:
 		// The tree opens or closes the item as it builds it.
 		s.expand = 1

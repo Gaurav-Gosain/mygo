@@ -533,6 +533,12 @@ func (c *context) OpenURLThen(url string, done func(err error)) {
 // handled it first: a focused button or link takes Enter and Space, and a
 // check box, switch or radio button Space, so that Enter can press a
 // dialog's default button.
+// ShortcutSeq returns the number of the key press (InputEvent.Seq) that the
+// last Shortcut, of the window or of an element, to report true matched,
+// and 0 before any did. Two presses of one key have two numbers, and a key
+// a handler took (HandleInput) never comes to a shortcut with its number.
+func (c *context) ShortcutSeq() uint64 { return c.rt.shortcutSeq }
+
 func (c *context) Shortcut(mods Modifiers, key Key) bool {
 	if !c.insideModal() || c.inert {
 		return false // behind a dialog, or in a page going away

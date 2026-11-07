@@ -86,6 +86,13 @@ type InputEvent struct {
 	// Time is when the event came, by the clock of the window's frames
 	// (Context.Now), which a Tester's clock is in tests.
 	Time time.Time
+	// Seq is the number of the key press an InputKeyDown, InputKeyUp or
+	// InputText is of: a key down, the text it types and its release share
+	// it, and each press has one of its own, so that two equal letters
+	// typed have two. Text that no key press typed, as of an input method
+	// or a paste, has a number of its own. Context.ShortcutSeq gives the
+	// number of the press a shortcut matched. 0 for other events.
+	Seq uint64
 }
 
 // HandleInput has fn take the element's input as it comes, on the main

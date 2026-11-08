@@ -220,3 +220,34 @@ func TestTextTypedBehindASubmitKeepsItsPlace(t *testing.T) {
 		t.Fatalf("the pane has %q, want tty", got)
 	}
 }
+
+// TestAModifierAloneHoldsNothing: a key down with no key, as Shift alone
+// comes from some senders, matches no shortcut. Text typed after it goes
+// to the field at once, with no frame between: else every Shift typed
+// held the text behind it until a frame came.
+func TestAModifierAloneHoldsNothing(t *testing.T) {
+	var pane []string
+	tt := coreNewTester(func(c *context) {
+		// A terminal: it takes the keys it has a name for, and text.
+		coreBox(c).Key("pane").Size(100, 50).Focusable().Focus().HandleInput(func(ev InputEvent) bool {
+			switch ev.Kind {
+			case InputText:
+				pane = append(pane, ev.Text)
+				return true
+			case InputKeyDown:
+				return ev.Key != KeyUnknown
+			}
+			return false
+		})
+	}, 300, 100)
+	tt.Frame()
+	tt.rt.event(platform.SurfaceEvent{Kind: platform.KeyPressed, Mods: platform.Modifiers(Shift)})
+	tt.rt.event(platform.SurfaceEvent{Kind: platform.TextInput, Text: ">"})
+	tt.rt.event(platform.SurfaceEvent{Kind: platform.KeyReleased, Mods: platform.Modifiers(Shift)})
+	tt.rt.event(platform.SurfaceEvent{Kind: platform.KeyPressed, Key: platform.Key(KeySlash)})
+	tt.rt.event(platform.SurfaceEvent{Kind: platform.TextInput, Text: "/"})
+	tt.rt.event(platform.SurfaceEvent{Kind: platform.KeyReleased, Key: platform.Key(KeySlash)})
+	if n := len(tt.rt.behind); n != 0 || strings.Join(pane, "") != ">/" {
+		t.Fatalf("%d events wait behind a Shift alone and the pane has %q, want none and >/", n, strings.Join(pane, ""))
+	}
+}

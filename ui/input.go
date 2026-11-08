@@ -807,6 +807,12 @@ func (rt *engine) keyDownPhysical(mods Modifiers, key, physical Key, repeat bool
 	if !rt.claimed(k) && rt.scrollKey(mods, key) {
 		return false
 	}
+	if key == KeyUnknown {
+		// No shortcut has it, as a modifier alone that some senders give
+		// as a key: on the queue, it held the text typed after it until a
+		// frame came (holdBehind).
+		return false
+	}
 	rt.keys = append(rt.keys, pressedKey{k, rt.pressSeq, rt.typedIn()})
 	rt.requestFrame()
 	return false

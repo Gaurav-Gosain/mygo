@@ -22,7 +22,8 @@ func (rt *engine) keysWait() bool {
 // it waits for that frame, then goes where the frame put the focus. Keys
 // replayed set nothing: the replay delivers them all after one frame.
 func (rt *engine) actedOn(k keyEvent) {
-	if rt.replaying || typesText(k) {
+	if rt.replaying || typesText(k) || k.key == KeyUnknown {
+		// A modifier alone, as some senders give it, acts on nothing.
 		return
 	}
 	rt.keyActs = true

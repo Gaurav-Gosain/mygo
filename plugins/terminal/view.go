@@ -647,7 +647,7 @@ func (v *view) input(ev ui.InputEvent) bool {
 	case ui.InputKeyUp:
 		return v.keyUp(ev)
 	case ui.InputText:
-		v.typed(ev.Text)
+		v.typed(ev)
 		return true
 	case ui.InputCompose:
 		v.preedit, v.preeditCaret, v.pending = ev.Text, ev.Caret, nil
@@ -870,12 +870,16 @@ func (v *view) keyUp(ev ui.InputEvent) bool {
 }
 
 // typed sends text typed or committed by an input method.
-func (v *view) typed(text string) {
+func (v *view) typed(ev ui.InputEvent) {
+	text := ev.Text
 	v.preedit = ""
 	p := v.pending
 	v.pending = nil
 	if p != nil && p.taken {
 		return // the text of a key OnKey took
+	}
+	if on := v.t.opts.OnText; on != nil && on(ev) {
+		return
 	}
 	if p == nil {
 		// Text without a key: of an input method, or every key typing

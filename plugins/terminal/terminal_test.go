@@ -1632,6 +1632,47 @@ func TestOnKeyTakesAKey(t *testing.T) {
 	}
 }
 
+// TestOnTextTakesText: Options.OnText sees the text a key types, or text
+// that comes alone (Linux, an input method), on the main thread before the
+// terminal sends it, in order with the keys around it; a true result sends
+// nothing. The text of a key OnKey took never reaches it.
+func TestOnTextTakesText(t *testing.T) {
+	loadLib(t)
+	conn := newPipe()
+	var seen []string
+	var term *Terminal
+	term, err := New(Options{Conn: conn,
+		OnKey: func(mods ui.Modifiers, key ui.Key) bool { return key == ui.KeyX },
+		OnText: func(ev ui.InputEvent) bool {
+			seen = append(seen, ev.Text)
+			if ev.Text == "g" {
+				term.Send([]byte("<g>")) // in order with what is typed
+				return true
+			}
+			return false
+		}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer term.Close()
+	tt := ui.NewTester(func(c *ui.Context) { View(c, term).Fill().AutoFocus() }, 400, 200)
+	tt.Frame()
+	tt.TypeKey(0, ui.KeyA, "a")
+	tt.TypeKey(0, ui.KeyG, "g")
+	tt.TypeKey(0, ui.KeyX, "x") // OnKey took it: its text is not offered
+	tt.Key(0, ui.KeyTab)
+	tt.Type("b") // text alone, as on Linux
+	tt.Type("g")
+	tt.Type("\u00e9t\u00e9") // an input method's commit
+	tt.Frame()
+	if got := conn.take(term); got != "a<g>\tb<g>\u00e9t\u00e9" {
+		t.Errorf("sent %q, want the taken text's marks in order with the rest", got)
+	}
+	if want := []string{"a", "g", "b", "g", "\u00e9t\u00e9"}; !slices.Equal(seen, want) {
+		t.Errorf("OnText saw %q, want %q", seen, want)
+	}
+}
+
 // TestOnScrollTakesTheWheel: Options.OnScroll sees the wheel's whole rows
 // before the scrollback moves, unless a program takes the wheel: as the
 // mouse, or as the arrows of a full-screen program.

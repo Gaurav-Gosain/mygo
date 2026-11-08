@@ -259,6 +259,13 @@ type Options struct {
 	// OnKeyEvent is OnKey with the whole key down event, whose Seq tells
 	// two presses of one key apart. When set, it runs in place of OnKey.
 	OnKeyEvent func(ev ui.InputEvent) bool
+	// OnText sees the text a key types, or text that comes without a key
+	// (every key on Linux, an input method's commit), on the main thread
+	// before the terminal encodes it, and reports whether it took the
+	// text; text taken sends nothing. Like OnKey it keeps its place among
+	// the input typed after it. The text of a key OnKey took does not
+	// come here.
+	OnText func(ev ui.InputEvent) bool
 	// OnScroll sees the wheel scroll the view by whole rows, negative up
 	// (a mouse wheel's notch is three, or on Windows as many as its "lines
 	// to scroll" setting asks), before the terminal scrolls its

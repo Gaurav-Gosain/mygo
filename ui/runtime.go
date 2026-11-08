@@ -301,7 +301,10 @@ type engine struct {
 	// a key down no text came with.
 	behind                    []heldEvent
 	replaying, replayUntexted bool
-	replayFocus               uint64
+	// keyActs is set while a key that acts waits for the frame that shows
+	// its outcome (actedOn).
+	keyActs     bool
+	replayFocus uint64
 	// pressSeqs is the number of each key held down, for its release.
 	pressSeqs map[Key]uint64
 	menu      menuState
@@ -586,6 +589,8 @@ func (rt *engine) runFrame() {
 	rt.animating, rt.repainting, rt.repaintAt = false, false, time.Time{}
 	rt.repaintRate, rt.repaintFull, rt.untracked = 0, false, false
 	rt.routeKeys()
+	// The frame shows what the keys that acted since the last one did.
+	rt.keyActs = false
 	rt.glideWheels(now)
 	if rt.drag != nil {
 		// The source's element is this frame's, if it builds one.

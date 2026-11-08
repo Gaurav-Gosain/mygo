@@ -89,6 +89,7 @@ func (rt *engine) event(ev platform.SurfaceEvent) (taken bool) {
 		rt.pressSeq, rt.pressTexted = rt.nextKeySeq(), false
 		rt.pressOf(Key(ev.Key), Key(ev.PhysicalKey), rt.pressSeq)
 		taken = rt.keyDownPhysical(Modifiers(ev.Mods), Key(ev.Key), Key(ev.PhysicalKey), ev.Repeat)
+		rt.actedOn(keyEvent{Modifiers(ev.Mods), Key(ev.Key)})
 	case platform.ModifiersChanged:
 		rt.modsChanged(Modifiers(ev.Mods))
 	case platform.KeyReleased:
@@ -110,6 +111,7 @@ func (rt *engine) event(ev platform.SurfaceEvent) (taken bool) {
 		// A menu accelerator comes as a command, not as a key.
 		rt.typingHidesTip(false)
 		rt.editEvent(editEvent{kind: editCommand, text: ev.Text})
+		rt.actedOn(keyEvent{Cmd, KeyUnknown})
 	case platform.SurfaceFocus:
 		rt.windowFocused = true
 		rt.blinkStart = rt.now()

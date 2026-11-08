@@ -168,3 +168,55 @@ func TestTextTypedBehindAWaitingKeyKeepsItsPlace(t *testing.T) {
 		t.Fatalf("the field has %q and the pane %q, want the pane to have all of tty", field, strings.Join(pane, ""))
 	}
 }
+
+// TestTextTypedBehindASubmitKeepsItsPlace: Enter in a single-line field
+// submits it, which the next frame reads, as a palette that closes and
+// gives the focus to a pane. Text typed after the Enter, before that frame,
+// goes to the pane, never into the field.
+func TestTextTypedBehindASubmitKeepsItsPlace(t *testing.T) {
+	field := ""
+	var pane []string
+	toPane := false
+	tt := coreNewTester(func(c *context) {
+		p := coreBox(c).Key("pane").Size(100, 50).Focusable().HandleInput(func(ev InputEvent) bool {
+			switch ev.Kind {
+			case InputText:
+				pane = append(pane, ev.Text)
+				return true
+			case InputKeyDown:
+				return true
+			}
+			return false
+		})
+		if toPane {
+			p.Focus()
+			return
+		}
+		in := textInputBase(c, &field, false).Size(200, 40)
+		in.Focus()
+		if in.Submitted() {
+			toPane = true
+			field = ""
+		}
+	}, 300, 100)
+	tt.Frame()
+	tt.Frame()
+	tt.Type("tests")
+	tt.Frame()
+	tt.rt.event(platform.SurfaceEvent{Kind: platform.KeyPressed, Key: platform.Key(KeyEnter)})
+	tt.rt.event(platform.SurfaceEvent{Kind: platform.KeyReleased, Key: platform.Key(KeyEnter)})
+	for _, r := range []Key{KeyT, KeyT, KeyY} {
+		tt.rt.event(platform.SurfaceEvent{Kind: platform.KeyPressed, Key: platform.Key(r)})
+		tt.rt.event(platform.SurfaceEvent{Kind: platform.TextInput, Text: string(rune('a' + r - KeyA))})
+		tt.rt.event(platform.SurfaceEvent{Kind: platform.KeyReleased, Key: platform.Key(r)})
+	}
+	for range 4 {
+		tt.Frame()
+	}
+	if !toPane {
+		t.Fatalf("the Enter never submitted the field")
+	}
+	if got := strings.Join(pane, ""); got != "tty" {
+		t.Fatalf("the pane has %q, want tty", got)
+	}
+}

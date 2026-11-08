@@ -10,8 +10,24 @@ type heldEvent struct {
 }
 
 // keysWait reports whether a key pressed waits for the next frame: a key a
-// shortcut reads then, or a second key for an element that took one.
-func (rt *engine) keysWait() bool { return len(rt.keys) > 0 || len(rt.retried) > 0 }
+// shortcut reads then, a second key for an element that took one, or a key
+// that acts (actedOn), whose outcome the view shows then.
+func (rt *engine) keysWait() bool {
+	return len(rt.keys) > 0 || len(rt.retried) > 0 || rt.keyActs
+}
+
+// actedOn notes that key k went down: a key that types no text acts (Enter
+// submits a field, Escape closes a panel, a chord switches the view), and
+// the view moves the focus as it builds the next frame. What is typed after
+// it waits for that frame, then goes where the frame put the focus. Keys
+// replayed set nothing: the replay delivers them all after one frame.
+func (rt *engine) actedOn(k keyEvent) {
+	if rt.replaying || typesText(k) {
+		return
+	}
+	rt.keyActs = true
+	rt.requestFrame()
+}
 
 // holdBehind keeps input that comes while a key waits behind that key, and
 // reports whether it did. Text and keys typed after a key that waits would

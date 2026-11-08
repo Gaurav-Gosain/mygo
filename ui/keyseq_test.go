@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/Gaurav-Gosain/mygo/internal/platform"
@@ -114,5 +115,56 @@ func TestKeyWaitingKeepsItsFocus(t *testing.T) {
 	tt.Frame()
 	if len(got) != 2 {
 		t.Fatalf("the list got %v, want both m", got)
+	}
+}
+
+// TestTextTypedBehindAWaitingKeyKeepsItsPlace: Escape in a field is the
+// window's shortcut, read in the next frame, and it moves the focus from
+// the field to a pane that reads keys and text as they come. Text typed
+// after the Escape, before that frame, goes where the Escape sent the focus,
+// never into the field: keys and text leave the queue in the order they
+// came.
+func TestTextTypedBehindAWaitingKeyKeepsItsPlace(t *testing.T) {
+	field := ""
+	var pane []string
+	toPane := false
+	tt := coreNewTester(func(c *context) {
+		if c.Shortcut(0, KeyEscape) {
+			toPane = true
+		}
+		p := coreBox(c).Key("pane").Size(100, 50).Focusable().HandleInput(func(ev InputEvent) bool {
+			switch ev.Kind {
+			case InputText:
+				pane = append(pane, ev.Text)
+				return true
+			case InputKeyDown:
+				return ev.Key != KeyEscape
+			}
+			return false
+		})
+		in := textInputBase(c, &field, false).Size(200, 40)
+		if toPane {
+			p.Focus()
+		} else {
+			in.Focus()
+		}
+	}, 300, 100)
+	tt.Frame()
+	tt.Frame()
+	tt.rt.event(platform.SurfaceEvent{Kind: platform.KeyPressed, Key: platform.Key(KeyEscape)})
+	tt.rt.event(platform.SurfaceEvent{Kind: platform.KeyReleased, Key: platform.Key(KeyEscape)})
+	for _, r := range []Key{KeyT, KeyT, KeyY} {
+		tt.rt.event(platform.SurfaceEvent{Kind: platform.KeyPressed, Key: platform.Key(r)})
+		tt.rt.event(platform.SurfaceEvent{Kind: platform.TextInput, Text: string(rune('a' + r - KeyA))})
+		tt.rt.event(platform.SurfaceEvent{Kind: platform.KeyReleased, Key: platform.Key(r)})
+	}
+	for range 4 {
+		tt.Frame()
+	}
+	if !toPane {
+		t.Fatalf("the Escape never reached the window's shortcut")
+	}
+	if field != "" || strings.Join(pane, "") != "tty" {
+		t.Fatalf("the field has %q and the pane %q, want the pane to have all of tty", field, strings.Join(pane, ""))
 	}
 }

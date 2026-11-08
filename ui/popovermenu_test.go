@@ -817,12 +817,14 @@ func TestPopoverMenuButtonKeysInOneFrame(t *testing.T) {
 		t.Errorf("Down, Down and Enter: pinned %v, menu shows %v", a.pinned, menuShows(tt))
 	}
 
-	// Enter chooses the item highlighted before the Down after it.
+	// Enter chooses the item highlighted before the Down after it, and the
+	// Down goes to the button the Enter gave the focus back to: it opens
+	// the menu again.
 	tt.Click("Actions")
 	keys(KeyDown)
 	keys(KeyEnter, KeyDown)
-	if !slices.Equal(a.chosen, []string{"Open"}) || !a.pinned || menuShows(tt) {
-		t.Errorf("Enter and Down: chose %q, pinned %v, menu shows %v", a.chosen, a.pinned, menuShows(tt))
+	if !slices.Equal(a.chosen, []string{"Open"}) || !a.pinned || !menuShows(tt) || tt.Focused("Actions") {
+		t.Errorf("Enter and Down: chose %q, pinned %v, menu shows %v, button focused %v", a.chosen, a.pinned, menuShows(tt), tt.Focused("Actions"))
 	}
 }
 

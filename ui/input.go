@@ -15,6 +15,9 @@ func (rt *engine) event(ev platform.SurfaceEvent) (taken bool) {
 		// A menu asking about its item changes nothing.
 		return rt.commandEnabled(ev.Text)
 	}
+	if rt.holdBehind(ev) {
+		return false
+	}
 	if ev.Kind != platform.SurfaceFrame {
 		// Whatever the event changes, the next frame builds anew.
 		rt.redraw = false
@@ -726,6 +729,9 @@ func (rt *engine) keyDownPhysical(mods Modifiers, key, physical Key, repeat bool
 	if key == KeyEscape && mods == 0 && rt.dragCancel() {
 		return true
 	}
+	if rt.keptWhereTyped(k) {
+		return false
+	}
 	if h := rt.focusHandler(); h != nil && !rt.claimed(k) && rt.deliver(h, InputEvent{Kind: InputKeyDown, Key: key, PhysicalKey: physical, Mods: mods, Repeat: repeat, Seq: rt.pressSeq}) {
 		rt.blinkStart = rt.now()
 		return true
@@ -799,7 +805,7 @@ func (rt *engine) keyDownPhysical(mods Modifiers, key, physical Key, repeat bool
 	if !rt.claimed(k) && rt.scrollKey(mods, key) {
 		return false
 	}
-	rt.keys = append(rt.keys, pressedKey{k, rt.pressSeq, rt.focused})
+	rt.keys = append(rt.keys, pressedKey{k, rt.pressSeq, rt.typedIn()})
 	rt.requestFrame()
 	return false
 }
@@ -1082,7 +1088,7 @@ func (rt *engine) commandKey(ev editEvent, ed *editor) bool {
 	if seq == 0 {
 		seq = rt.nextKeySeq() // a menu's command, of no press seen
 	}
-	rt.keys = append(rt.keys, pressedKey{k, seq, rt.focused})
+	rt.keys = append(rt.keys, pressedKey{k, seq, rt.typedIn()})
 	rt.requestFrame()
 	return true
 }

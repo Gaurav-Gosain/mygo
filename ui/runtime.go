@@ -295,6 +295,13 @@ type engine struct {
 	// shortcutSeq that of the key the last Shortcut reporting true matched.
 	keySeq, pressSeq, shortcutSeq uint64
 	pressTexted                   bool
+	// behind is the input that came while a key waited, which the frame
+	// that routes the key replays after it (holdBehind); replayFocus is
+	// the focus as the event replaying came, and replayUntexted that it is
+	// a key down no text came with.
+	behind                    []heldEvent
+	replaying, replayUntexted bool
+	replayFocus               uint64
 	// pressSeqs is the number of each key held down, for its release.
 	pressSeqs map[Key]uint64
 	menu      menuState
@@ -1124,6 +1131,13 @@ func (rt *engine) endFrame() {
 	if rt.closing {
 		rt.close()
 	}
+	if rt.closed {
+		rt.behind = nil
+		return
+	}
+	// The keys that waited went where the frame sent them: what came
+	// after them goes now.
+	rt.replayBehind(false)
 }
 
 // commit records the laid out frame in the elements' states: their

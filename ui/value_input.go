@@ -1,6 +1,9 @@
 package ui
 
-import "slices"
+import (
+	"slices"
+	"unicode/utf8"
+)
 
 // Input bindings are retained by ID. Input reaches a control as the public
 // constructor that built it returns, as Dear ImGui's and egui's widgets
@@ -256,6 +259,13 @@ func applyString(n *node) {
 				*value = ed.buf.s
 				st.markChanged()
 			}
+		} else if merged, caret, ok := mergeEdits(before, *value, ed.buf.s); ok && !n.disabled() && !ed.readOnly && ed.compose == "" && !ed.compositionActive {
+			// The app wrote the string and the field took native text in
+			// one frame: both edits, where they do not overlap.
+			ed.setText(merged)
+			ed.caret, ed.anchor = caret, caret
+			*value = merged
+			st.markChanged()
 		} else {
 			ed.setText(*value)
 			ed.compose = ""
@@ -416,4 +426,50 @@ func (e *node) SetChanged() *node {
 		e.st.markChanged()
 	}
 	return e
+}
+
+// strEdit is the one edit that makes after from before: the bytes
+// [start, end) of before replaced by ins. The common prefix is taken first,
+// the longest it can be, then the common suffix of what is left, both at
+// rune starts: an edit that could sit at several places sits as far right
+// as it can, the same for every edit.
+func strEdit(before, after string) (start, end int, ins string) {
+	p := 0
+	for p < len(before) && p < len(after) && before[p] == after[p] {
+		p++
+	}
+	for p > 0 && p < len(before) && !utf8.RuneStart(before[p]) {
+		p--
+	}
+	q := 0
+	for q < len(before)-p && q < len(after)-p && before[len(before)-1-q] == after[len(after)-1-q] {
+		q++
+	}
+	for q > 0 && !utf8.RuneStart(before[len(before)-q]) {
+		q--
+	}
+	return p, len(before) - q, after[p : len(after)-q]
+}
+
+// mergeEdits applies to before both the app's write (app) and the native
+// input (native), each an edit of before, when their ranges do not
+// overlap. At one point the app's text goes first: the app writes what was
+// typed before the native text. It returns the text, the caret after the
+// native text in runes, and false when the edits overlap.
+func mergeEdits(before, app, native string) (string, int, bool) {
+	as, ae, ai := strEdit(before, app)
+	ns, ne, ni := strEdit(before, native)
+	var out string
+	var caret int
+	switch {
+	case ns >= ae:
+		head := before[:as] + ai + before[ae:ns] + ni
+		out, caret = head+before[ne:], utf8.RuneCountInString(head)
+	case ne <= as:
+		head := before[:ns] + ni
+		out, caret = head+before[ne:as]+ai+before[ae:], utf8.RuneCountInString(head)
+	default:
+		return "", 0, false
+	}
+	return out, caret, true
 }

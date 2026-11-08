@@ -251,3 +251,125 @@ func TestAModifierAloneHoldsNothing(t *testing.T) {
 		t.Fatalf("%d events wait behind a Shift alone and the pane has %q, want none and >/", n, strings.Join(pane, ""))
 	}
 }
+
+// TestTextTypedBehindADialogSubmitGoesBackToTheOpener: a dialog with a
+// field, as a command palette, opened from a pane. Enter submits the field
+// and the app closes the dialog in the frame that reads it. The focus goes
+// back to the pane only in the frame after, when the dialog is gone. Text
+// typed after the Enter must reach the pane: replayed in the frame that
+// read the Enter, it went into the closing field and was lost with it (the
+// first letter of a line typed after a palette jump, b10).
+func TestTextTypedBehindADialogSubmitGoesBackToTheOpener(t *testing.T) {
+	field := ""
+	var pane []string
+	open, first, back := false, true, false
+	tt := coreNewTester(func(c *context) {
+		p := coreBox(c).Key("pane").Size(100, 50).Focusable().HandleInput(func(ev InputEvent) bool {
+			switch ev.Kind {
+			case InputText:
+				pane = append(pane, ev.Text)
+				return true
+			case InputKeyDown:
+				return true
+			}
+			return false
+		})
+		if first || back {
+			// The app gives the pane the keys back once the dialog is
+			// gone, as guios's key owner does.
+			p.Focus()
+			first, back = false, false
+		}
+		coreDialogBase(c, &open, func(_, panel *node) {
+			in := textInputBase(c, &field, false).Size(200, 40).AutoFocus()
+			if in.Submitted() {
+				open, back = false, true
+			}
+		})
+	}, 300, 100)
+	tt.Frame()
+	open = true
+	tt.Frame()
+	tt.Frame()
+	tt.Type("tests")
+	tt.Frame()
+	tt.rt.event(platform.SurfaceEvent{Kind: platform.KeyPressed, Key: platform.Key(KeyEnter)})
+	tt.rt.event(platform.SurfaceEvent{Kind: platform.KeyReleased, Key: platform.Key(KeyEnter)})
+	for _, r := range []Key{KeyT, KeyT, KeyY} {
+		tt.rt.event(platform.SurfaceEvent{Kind: platform.KeyPressed, Key: platform.Key(r)})
+		tt.rt.event(platform.SurfaceEvent{Kind: platform.TextInput, Text: string(rune('a' + r - KeyA))})
+		tt.rt.event(platform.SurfaceEvent{Kind: platform.KeyReleased, Key: platform.Key(r)})
+	}
+	for range 4 {
+		tt.Frame()
+	}
+	if open {
+		t.Fatalf("the Enter never closed the dialog")
+	}
+	if got := strings.Join(pane, ""); got != "tty" {
+		t.Fatalf("the pane has %q, want tty (field %q)", got, field)
+	}
+}
+
+// TestTextAnEditorTakesBehindAWaitingKeyKeepsItsPlace: a letter typed in a
+// list waits for the list (routed where it was typed), and the letters
+// typed after it, once a field has the focus, come by the field's text
+// client at once, as AppKit's insertText gives them. The list writes its
+// letter into the field's string when it reads it, in the frame the field
+// took the others. Both stay, the list's letter first; the app's string
+// won, and the field lost the letters typed after it (guios b10).
+func TestTextAnEditorTakesBehindAWaitingKeyKeepsItsPlace(t *testing.T) {
+	s := ""
+	inField, toEnd := false, false
+	tt := coreNewTester(func(c *context) {
+		// The field first, as guios builds the reply box before the list.
+		in := textInput(c, &s, false).Size(200, 30)
+		if toEnd {
+			// The caret after the list's text, as guios's reply box puts it.
+			toEnd = false
+			n := len([]rune(s))
+			in.SetTextSelection(n, n)
+		}
+		l := coreBox(c).Key("list").Size(100, 50).Focusable()
+		if !inField {
+			l.Focus()
+		}
+		if l.Shortcut(0, KeySpace) {
+			inField = true
+			in.Focus()
+		}
+		if l.Shortcut(0, KeyM) {
+			s += "m"
+			toEnd = true
+		}
+	}, 300, 120)
+	defer tt.rt.close()
+	tt.Frame()
+	press := func(k Key) {
+		tt.rt.event(platform.SurfaceEvent{Kind: platform.KeyPressed, Key: platform.Key(k)})
+		tt.rt.event(platform.SurfaceEvent{Kind: platform.KeyReleased, Key: platform.Key(k)})
+	}
+	// Space and m reach the list before a frame: Space gives the field the
+	// focus, the m waits behind it.
+	press(KeySpace)
+	press(KeyM)
+	tt.rt.runFrame()
+	// The field has the focus: m and o come by its client, while the
+	// list's m still waits.
+	cl := tt.h.ime.Client
+	for _, k := range []struct {
+		key  Key
+		text string
+	}{{KeyM, "m"}, {KeyO, "o"}} {
+		tt.rt.event(platform.SurfaceEvent{Kind: platform.KeyPressed, Key: platform.Key(k.key)})
+		cl.ReplaceText(nil, k.text)
+		tt.rt.event(platform.SurfaceEvent{Kind: platform.KeyReleased, Key: platform.Key(k.key)})
+	}
+	for range 4 {
+		tt.Frame()
+	}
+	if s != "mmo" {
+		t.Fatalf("the field has %q, want mmo", s)
+	}
+}
+

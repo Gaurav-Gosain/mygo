@@ -195,3 +195,49 @@ func TestWidgetNativeQueryMalformedUTF8(t *testing.T) {
 		t.Fatalf("native query %q %+v", doc, actual)
 	}
 }
+
+// TestAppWriteAndNativeTextInOneFrameKeepBoth: the app writes the bound
+// string (text it kept for the field, typed first) in the frame the field
+// took native text typed after it. Both are kept, the app's first. The app's
+// string won, and the native text was lost: a reply box typed " mmoo1z"
+// showed " mo1z" or " mm" (guios b10).
+func TestAppWriteAndNativeTextInOneFrameKeepBoth(t *testing.T) {
+	cases := []struct {
+		name, start, app, native, want string
+	}{
+		{"both at the end", " ", " m", "mo", " mmo"},
+		{"a repeated letter", " m", " mm", "oo", " mmoo"},
+		{"app clears, then typed", "tests", "", "t", "t"},
+		{"apart", "ab", "Xab", "c", "Xabc"},
+		{"runes", "é", "éé", "ü", "ééü"},
+		// Both change one letter: the app's string, as before.
+		{"overlap", "abc", "aXc", "abc", "aXc"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := tc.start
+			write := false
+			tt := coreNewTester(func(c *context) {
+				if write {
+					s, write = tc.app, false
+				}
+				textInput(c, &s, false).Fill().AutoFocus()
+			}, 300, 120)
+			defer tt.rt.close()
+			tt.Frame()
+			cl := tt.h.ime.Client
+			end := platform.UTF16Len(tc.start)
+			if tc.name == "overlap" {
+				cl.ReplaceText(&TextInputRange{Start: 1, End: 2}, "Z")
+			} else {
+				cl.ReplaceText(&TextInputRange{Start: end, End: end}, tc.native)
+			}
+			write = true
+			tt.Frame()
+			tt.Frame()
+			if s != tc.want {
+				t.Fatalf("the field has %q, want %q", s, tc.want)
+			}
+		})
+	}
+}

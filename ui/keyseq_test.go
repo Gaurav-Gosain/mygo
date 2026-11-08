@@ -373,3 +373,52 @@ func TestTextAnEditorTakesBehindAWaitingKeyKeepsItsPlace(t *testing.T) {
 	}
 }
 
+// TestTextAnEditorTakesBehindTwoWaitingKeysKeepsItsPlace: two letters typed
+// in a list wait for it, one a frame, and a letter typed after them, once a
+// field has the focus, comes by the field's text client. It must wait
+// behind the second, as a key down does: the client took it at once, and
+// the field showed "mom" for "mmo" (guios b10).
+func TestTextAnEditorTakesBehindTwoWaitingKeysKeepsItsPlace(t *testing.T) {
+	s := ""
+	inField, toEnd := false, false
+	tt := coreNewTester(func(c *context) {
+		in := textInput(c, &s, false).Size(200, 30)
+		if toEnd {
+			// The caret after the list's text, as guios's reply box puts it.
+			toEnd = false
+			n := len([]rune(s))
+			in.SetTextSelection(n, n)
+		}
+		l := coreBox(c).Key("list").Size(100, 50).Focusable()
+		if !inField {
+			l.Focus()
+		}
+		if l.Shortcut(0, KeySpace) {
+			inField = true
+			in.Focus()
+		}
+		if l.Shortcut(0, KeyM) {
+			s += "m"
+			toEnd = true
+		}
+	}, 300, 120)
+	defer tt.rt.close()
+	tt.Frame()
+	press := func(k Key) {
+		tt.rt.event(platform.SurfaceEvent{Kind: platform.KeyPressed, Key: platform.Key(k)})
+		tt.rt.event(platform.SurfaceEvent{Kind: platform.KeyReleased, Key: platform.Key(k)})
+	}
+	press(KeySpace)
+	press(KeyM)
+	press(KeyM)
+	tt.rt.runFrame()
+	tt.rt.event(platform.SurfaceEvent{Kind: platform.KeyPressed, Key: platform.Key(KeyO)})
+	tt.h.ime.Client.ReplaceText(nil, "o")
+	tt.rt.event(platform.SurfaceEvent{Kind: platform.KeyReleased, Key: platform.Key(KeyO)})
+	for range 4 {
+		tt.Frame()
+	}
+	if s != "mmo" {
+		t.Fatalf("the field has %q, want mmo", s)
+	}
+}

@@ -63,6 +63,20 @@ func (rt *engine) holdBehind(ev platform.SurfaceEvent) bool {
 	return true
 }
 
+// holdTyped keeps text an editor's client was given (AppKit's insertText
+// with an editor focused) behind the keys held, as text, and reports
+// whether it did. The host gives it at once, past rt.event, after the key
+// down holdBehind kept: else the editor took it before the keys typed
+// first (guios b10). Replayed, it goes in by the focus then.
+func (rt *engine) holdTyped(text string) bool {
+	if rt.replaying || len(rt.behind) == 0 || text == "" {
+		return false
+	}
+	rt.behind = append(rt.behind, heldEvent{platform.SurfaceEvent{Kind: platform.TextInput, Text: text}, rt.focused})
+	rt.requestFrame()
+	return true
+}
+
 // replayBehind delivers the input held behind keys that waited, in the
 // order it came, to the focus the frames since gave. It stops before a key
 // down, a command or a press while a key waits again, for the next frame;

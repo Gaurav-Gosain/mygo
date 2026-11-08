@@ -174,8 +174,11 @@ func (w *widgetTextInput) MarkedRange() (TextInputRange, bool) {
 }
 
 func (w *widgetTextInput) ReplaceText(r *TextInputRange, s string) {
-	w.prepare()
 	ed := w.ed
+	if r == nil && ed.compose == "" && !ed.compositionActive && w.rt.holdTyped(s) {
+		return
+	}
+	w.prepare()
 	if ed.readOnly {
 		return
 	}
